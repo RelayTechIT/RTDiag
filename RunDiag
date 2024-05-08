@@ -20,15 +20,6 @@
     iwr -useb "$gURL`RTDiagFunctions" | iex
 # Functions End
 
-# Self-elevate the script if required
-if (-Not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] 'Administrator')) {
- if ([int](Get-CimInstance -Class Win32_OperatingSystem | Select-Object -ExpandProperty BuildNumber) -ge 6000) {
-  $CommandLine = "-File `"" + $MyInvocation.MyCommand.Path + "`" " + $MyInvocation.UnboundArguments
-  Start-Process -FilePath PowerShell.exe -Verb Runas -ArgumentList $CommandLine
-  Exit
- }
-}
-
 # Script Start
 
 # Begin the script transcript to the logfile
@@ -38,23 +29,22 @@ Start-Transcript $LogTxt
 
 
 function _ShowMenu {
-    Write-Host "Relay Tech Diagnostic v$ScriptVers"
-    Write-Host ""
-    Write-Host "    Select an option to continue:"
-    Write-Host "        1 -      SystemUptime"
-    Write-Host "        2 -      WindowsTime"
-    Write-Host "        3 -      ChocoUpdate"
-    Write-Host "        4 -      WinUpdate"
-    Write-Host "        5 -      ActiveBackupCheck"
-    Write-Host "        6 -      DiskCleanup"
-    Write-Host "        7 -      DiskChecks"
-    Write-Host ""    
-    Write-Host "        99 -     End Script"
-    Write-Host ""
-    Return Read-Host -Prompt "Enter your selection below"
-    
-}
+    $Steps = ("SystemUptime", "WindowsTime", "ChocoUpdate", "WinUpdate", "ActiveBackupCheck", "DiskCleanup", "DiskChecks")
+    $n = 1
+    $count = ($Steps.count)
 
+        $Output =   @()
+        $Output +=  "Relay Tech Diagnostic version:"+$ScriptVers
+        $Output +=  ""
+        $Output +=  "Select an option to continue:"
+    $steps | foreach {
+        $Output +=  "   "+$n+"  -   "+$_
+        $n++
+    }
+        $Output +=  ""
+        $Output +=  "   99  -   End Script"
+        $Output +=  ""
+}
 
 While (1) {
     Switch (_ShowMenu) {
@@ -69,7 +59,6 @@ While (1) {
         Default {Write-Host "Incorrect Selection. Pick again."}
     }
 }
-
 
 # Stop writing to the log file
 Stop-Transcript
