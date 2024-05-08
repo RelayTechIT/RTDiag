@@ -1,0 +1,24 @@
+    $GetWin = Get-WindowsUpdate
+    $Count = $GetWin.Count
+
+    If (!($GetWin)) {
+        If (_InputWait -Prompt "Packages missing for windows update. Install them now?") {
+            If (Get-ExecutionPolicy -ne "RemoteSigned") {Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Force; };
+            if (!(Get-PackageProvider -ListAvailable -Name NuGet)) {Get-PackageProvider -Name NuGet -Force};
+            if (!(Get-Module -ListAvailable -Name PSWindowsUpdate)) {Install-Module -Name PSWindowsUpdate -Force};
+            Get-Package -Name PSWindowsUpdate -Force; 
+            $GetWin = Get-WindowsUpdate
+            $Count = $GetWin.Count
+        }
+    }
+
+    $GetWin
+    If ($Count -eq 0) {
+        Write-Host
+        Write-Host "There are $Count windows updates waiting to be installed.. Press any key to continue."
+        pause
+    } else {
+        If (_InputWait -Prompt "There are $Count windows updates waiting to be installed.. Update them now?") {
+            Install-WindowsUpdate -MicrosoftUpdate -AcceptAll -IgnoreReboot
+        }
+    } 
