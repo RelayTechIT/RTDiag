@@ -1,0 +1,115 @@
+#   Disk Space Cleanup
+choco install gdu
+
+
+$StrtDsk   =  @()
+$StrtDsk   += ($env:SystemDrive -replace (':'),(''))                                          # [0] Start - System Drive
+$StrtDsk   += get-volume -DriveLetter $StrtDsk[0]                                           # [1] Start - Get System Disk Volume Info
+$StrtDsk   += [math]::round($StrtDsk[1].Size / 1GB,2)                                       # [2] Start - Total Used (GB)
+$StrtDsk   += [math]::round((($StrtDsk[1].Size - $StrtDsk[1].SizeRemaining) / 1GB),2)     # [3] Start - Disk Used (GB)
+$StrtDsk   += [math]::round(($StrtDsk[3] / $StrtDsk[2] * 100),0)                          # [4] Start - Disk Percent Full
+
+$FoldersToDelete = "C:\Windows.old","C:\Windows10Upgrade"
+foreach ($f in $FoldersToDelete) {_DirDelete -DirectoryPath $f}
+
+$FoldersToEmpty = "C:\Windows\Temp","C:\Temp"
+foreach ($f in $FoldersToEmpty) {_DirDeleteContents -DirectoryPath $f}
+
+$UserProfileData = "Appdata\Local\Temp"
+foreach ($Upd in $UserProfileData) {
+    foreach ($u in (gci C:\Users -Directory).Name) {
+        _DirDeleteContents -DirectoryPath "C:\Users\$u\$Upd"
+    }
+}
+
+# Delete Recycle Bin
+Clear-RecycleBin
+Clear-RecycleBin -Force
+
+# Delete user profiles over 60 days old
+
+$ProfileAge = 90
+$ProgressPreference = 'SilentlyContinue' 
+$lcldir     =   'C:\RTSupport\Utilities'
+$lclfldr    =   'DelProf2'
+get-process *delprof* | Stop-Process
+
+If (gci -Path $lcldir -Recurse Delprof2.exe) {
+    $d = gci -Path $lcldir -Recurse Delprof2.exe
+} else {
+    If (!(Test-Path $lcldir)) {New-Item $lcldir -ItemType Directory -Force}
+    iwr -Uri 'https://helgeklein.com/downloads/DelProf2/current/Delprof2%201.6.0.zip' -OutFile $lcldir\$lclfldr`.zip
+    Expand-Archive -Path $lcldir\$lclfldr`.zip -DestinationPath $lcldir -Force
+    $d = gci -Path $lcldir -Recurse Delprof2.exe
+}    
+
+If ($ProfileAge -eq 0) {
+    $proc = & $d.FullName /l
+} else {
+    $proc = & $d.FullName /d:$ProfileAge /l
+}
+
+$ProfilesIgnored    =   @()
+$ProfilesToDelete   =   @()
+
+foreach ($l in $proc) {
+    If ($l -match $env:COMPUTERNAME) {
+        If ($l -match "Ignoring") {
+            $split = $l -split {$_ -eq "'" -or $_ -eq "\"}
+            $ProfilesIgnored += $split[$split.count - 2]
+        } else {
+            If ($l -notmatch "Listing inactive profiles") {
+                $split = $l -split {$_ -eq "'" -or $_ -eq "\"}
+                $ProfilesToDelete += $split[$split.count - 1]
+            }
+        }
+    }
+}
+
+$Count = $ProfilesIgnored.Count
+Write-Host "There are" $ProfilesIgnored.Count "profiles to keep:"
+foreach ($p in $ProfilesIgnored) {
+    Write-Host "`t$p"
+}
+
+Write-Host "There are" $ProfilesToDelete.Count "that can be deleted:"
+foreach ($p in $ProfilesToDelete) {
+    Write-Host "`t$p"
+}
+
+Write-Host
+$Size = 0
+$Count = $ProfilesToDelete.Count
+
+
+Write-Host "There are" $ProfilesToDelete.Count " older than $ProfileAge that can be deleted:"
+foreach ($p in $ProfilesToDelete) {
+    $gdu = (& gdu -nps "C:\Users\$p").Trim().Split(' ')
+    $Output = "Removing C:\Users\"+$p+" will free up "+$gdu[0]+" "+$gdu[1]+" of space. Remove profile?"
+    If (_InputWait -Prompt $Output) {
+        Write-Host "Deleting profile $p"
+        start-process $d.FullName -argumentlist "/id:$p /u" -wait -NoNewWindow
+    }
+}
+Write-Host
+Write-Host "Deleting all profiles $ProfileAge Days Old will clear out $Size "
+
+
+$EndDsk   =   @()
+$EndDsk   +=  ($env:SystemDrive -replace (':'),(''))                                          # [0] End - System Drive
+$EndDsk   +=  [math]::round((($StrtDsk[1].Size - $StrtDsk[1].SizeRemaining) / 1GB),2)     # [1] End - Disk Used (GB)
+$EndDsk   +=  [math]::round(($StrtDsk[3] / $StrtDsk[2] * 100),0)                          # [2] End - Disk Percent Full
+$EndDsk   +=  $StrtDsk[3] - $EndDsk[1]                                                    # [3] End - Disk Space Saved (GB)
+
+Write-Host "After Disk cleanup:"
+Write-Host "    Disk Information:"
+Write-Host "        Logical Drive Letter:   "$StrtDsk[0]
+Write-Host "        Disk Size (Total):      "$StrtDsk[2]"   (GB)"
+Write-Host "    Starting Disk:"
+Write-Host "        Disk Size (Used):       "$StrtDsk[3]"   (GB)"
+Write-Host "        Disk full (Percent):    "$StrtDsk[4]"       (%)"
+Write-Host "    Ending Disk:"
+Write-Host "        Disk Size (Used):       "$EndDsk[1]"    (GB)"
+Write-Host "        Disk full (Percent):    "$EndDsk[2]"        (%)"
+Write-Host
+Write-Host "Total Disk Space Cleared:       "$EndDsk[3]"    (GB)"
