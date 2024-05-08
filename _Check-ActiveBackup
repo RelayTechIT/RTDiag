@@ -1,0 +1,95 @@
+
+# Check 1
+    $Check          =   1
+    $Command        =   'vssadmin list providers'
+    $Heading        =   'ACTIVE BACKUP Check ' + $Check + " - "
+        Write-Host "$Heading Checking $Command"
+
+    $vssProviders   =   @{"Command" = $Command;"Output" = iex $Command;"MSSC" = 0;"MFSSC" = 0;"Other" = 0;"Total" = 0;}
+        foreach ($l in $vssProviders.Output) {
+            If ($l -match "Provider name:") {
+                $vssProviders.Total++
+                    If ($l -match "Microsoft Software Shadow Copy") {
+                        $vssProviders.MSSC++
+                    } elseif ($l -match "Microsoft File Share Shadow Copy") {
+                        $vssProviders.MFSSC++
+                    } else {
+                        $vssProviders.Other++
+                    }
+            }
+        }
+
+    $Msg    =   @()
+    $Msg    +=  "$Command Results:"
+    $Msg    +=  "   Microsoft Software Shadow Copy Providers:   "+$vssProviders.MSSC
+    $Msg    +=  "   Microsoft File Share Shadow Copy Providers: "+$vssProviders.MFSSC
+    $Msg    +=  "   Other Providers:                            "+$vssProviders.Other
+    $Msg    +=  "   Total Providers:                            "+$vssProviders.Total
+    $Msg    +=  ""
+
+    If ($vssProviders.Other -gt 0) {
+        $Msg    +=  "FAILURE:   $Heading Unapproved providers found. Only the Microsoft Software Shadow Copy Provider and Microsoft File Share Shadow Copy Provider are allowed. All others must be removed manually."
+        $Msg    +=  ""
+        $Msg    +=  "Output of $Command`:"
+        $Msg    +=  $vssProviders.Output
+        $Msg | Write-Host -ForegroundColor Red
+    } else {
+        $Msg    +=  "SUCCESS:   $Heading No unapproved providers found"
+        $Msg | Write-Host -ForegroundColor Green
+    }
+
+# Check 2
+    $Check          =   2
+    $Command        =   'vssadmin list writers'
+    $Heading        =   'ACTIVE BACKUP Check ' + $Check + " - "
+        Write-Host "$Heading Checking $Command"
+
+    $vssWriters   =   @{"Command" = $Command;"Output" = iex $Command;"Stable" = 0;"Unstable" = 0;"Total" = 0;}
+        foreach ($l in $vssWriters.Output) {
+            If ($l -match "State:") {
+                $vssWriters.Total++
+                If ($l -notmatch "Stable") {            
+                    $vssWriters.Unstable++
+                } else {
+                    $vssWriters.Stable++
+                }
+            }
+        }
+    
+    $Msg    =   @()
+    $Msg    +=  "$Command Results (First Run):"
+    $Msg    +=  "   Total:      "+$vssWriters.Total
+    $Msg    +=  "   Stable:     "+$vssWriters.Stable
+    $Msg    +=  "   Unstable:   "+$vssWriters.Unstable
+    $Msg    +=  ""
+
+    If ($vssWriters.Unstable -eq 0) {
+        $Msg    +=  "SUCCESS:   $Heading No unstable writers found."
+        $Msg | Write-Host -ForegroundColor Green
+    } else {
+        Write-Host "WARNING: " $vssWriters.Unstable "unstable writers found. Attempt fix now?" -ForegroundColor yellow
+                If ((Read-Host -prompt "Type FIX to repair or any other key to skip") -eq "FIX") {
+                    Write-Host "Restarting VSS Service"
+                    Get-Service VSS | Restart-Service
+                    Write-Host "Retesting Writers"
+                    remove-variable vssWriters
+                    $vssWriters   =   @{"Command" = $Command;"Output" = iex $Command;"Stable" = 0;"Unstable" = 0;"Total" = 0;}
+                        $Msg    =   @()
+                        $Msg    +=  "$Command Results (Second Run):"
+                        $Msg    +=  "   Total:      "+$vssWriters.Total
+                        $Msg    +=  "   Stable:     "+$vssWriters.Stable
+                        $Msg    +=  "   Unstable:   "+$vssWriters.Unstable
+                        $Msg    +=  ""
+
+                    If ($vssWriters.Unstable -gt 0) {
+                        $Msg    +=  "FAILURE:   $Heading Unstable writers could not be repaired. See log for more details."
+                        $Msg | Write-Host -ForegroundColor Red
+                    } else {
+                        $Msg    +=  "SUCCESS:   $Heading Successfully repaired unstable writers."
+                        $Msg | Write-Host -ForegroundColor Green
+                    }
+                } else {
+                    Write-Host "Skipping Repair" -ForegroundColor yellow
+                    Write-Host "FAILURE: " $vssWriters.Unstable "unstable writers found. This may affect future backups." -ForegroundColor Red
+                }
+    }    
