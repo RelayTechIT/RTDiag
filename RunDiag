@@ -40,13 +40,13 @@ function _ShowMenu {
 
 While (1) {
     Switch (_ShowMenu) {
-        1 {iwr -useb "$gURL`SystemUptime" | iex}
-        2 {iwr -useb "$gURL`WindowsTime" | iex}
-        3 {iwr -useb "$gURL`RTDiagFunctions" | iex}
-        4 {iwr -useb "$gURL`ChocoUpdate" | iex}
-        5 {iwr -useb "$gURL`ActiveBackupCheck" | iex}
-        6 {iwr -useb "$gURL`DiskCleanup" | iex}
-        7 {iwr -useb "$gURL`DiskChecks" | iex}
+        1 {$v='WinUpdate';iwr -useb $gURL$v | iex}
+        2 {$v='WindowsTime';iwr -useb $gURL$v | iex}
+        3 {$v='ChocoUpdate';iwr -useb $gURL$v | iex}
+        4 {$v='WinUpdate';iwr -useb $gURL$v | iex}
+        5 {$v='ActiveBackupCheck';iwr -useb $gURL$v | iex}
+        6 {$v='DiskCleanup';iwr -useb $gURL$v | iex}
+        7 {$v='DiskChecks';iwr -useb $gURL$v | iex}
         Default {Write-Host "Incorrect Selection. Pick again."}
     }
 }
