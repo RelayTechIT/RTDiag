@@ -38,22 +38,19 @@ Start-Transcript $LogTxt
 
 
 function _ShowMenu {
-    Write-Host "##################################################"
-    Write-Host "###                                            ###"
-    Write-Host "###        Relay Tech Diagnostic v0.1          ###"
-    Write-Host "###                                            ###"
-    Write-Host "###   Select an option to continue:            ###"
-    Write-Host "###        1) SystemUptime                     ###"
-    Write-Host "###        2) WindowsTime                      ###"
-    Write-Host "###        3) ChocoUpdate                      ###"
-    Write-Host "###        4) WinUpdate                        ###"
-    Write-Host "###        5) ActiveBackupCheck                ###"
-    Write-Host "###        6) DiskCleanup                      ###"
-    Write-Host "###        7) DiskChecks                       ###"
-    Write-Host "###                                            ###"
-    Write-Host "##################################################"
+    Write-Host "Relay Tech Diagnostic v$ScriptVers"
     Write-Host ""
-
+    Write-Host "    Select an option to continue:"
+    Write-Host "        1 -      SystemUptime"
+    Write-Host "        2 -      WindowsTime"
+    Write-Host "        3 -      ChocoUpdate"
+    Write-Host "        4 -      WinUpdate"
+    Write-Host "        5 -      ActiveBackupCheck"
+    Write-Host "        6 -      DiskCleanup"
+    Write-Host "        7 -      DiskChecks"
+    Write-Host ""    
+    Write-Host "        99 -     End Script"
+    Write-Host ""
     Return Read-Host -Prompt "Enter your selection below"
     
 }
@@ -68,6 +65,7 @@ While (1) {
         5 {$v='ActiveBackupCheck';iwr -useb $gURL$v | iex}
         6 {$v='DiskCleanup';iwr -useb $gURL$v | iex}
         7 {$v='DiskChecks';iwr -useb $gURL$v | iex}
+        99 {Break;}
         Default {Write-Host "Incorrect Selection. Pick again."}
     }
 }
