@@ -1,0 +1,15 @@
+$Drives = (Get-Volume | where DriveType -eq "Fixed").DriveLetter -match '^[a-z]$'
+
+Foreach ($Drv in $Drives) {
+    _IEXRun -Command "defrag $Drv`: /A" -Message "You do not need to defragment this volume"
+}
+
+Foreach ($Drv in $Drives) {
+    _IEXRun -Command "chkdsk $Drv`: /scan" -Message "Windows has scanned the file system and found no problems"
+}
+
+_IEXRun -Command "sfc /verifyonly" -Message "Windows Resource Protection did not find any integrity violations"
+# _IEXRun -Command "sfc /scannow" -Message "Windows Resource Protection did not find any integrity violations"
+_IEXRun -Command "DISM /Online /Cleanup-Image /RestoreHealth" -Message "The operation completed successfully"
+_IEXRun -Command "sfc /verifyonly" -Message "Windows Resource Protection did not find any integrity violations"
+# _IEXRun -Command "sfc /scannow" -Message "Windows Resource Protection did not find any integrity violations"
