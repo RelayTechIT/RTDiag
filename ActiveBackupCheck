@@ -1,0 +1,86 @@
+Write-Host "ACTIVE BACKUP CHECK 1 - Checking vssadmin providers"
+    $VSS1 = vssadmin list providers
+    $TotalP = 0
+    $OtherP = 0
+    $MSSCP = 0
+    $MFSSCP = 0
+        foreach ($line in $VSS1) {
+            If ($line -match "Provider name:") {
+                $TotalP = $TotalP + 1
+                If ($line -match "Microsoft Software Shadow Copy") {
+                    $MSSCP = $MSSCP + 1
+                } elseif ($line -match "Microsoft File Share Shadow Copy") {
+                    $MFSSCP = $MFSSCP + 1
+                } else {
+                    Write-Host "Other Provider Found: $line"
+                    $OtherP = $OtherP + 1
+                }
+            }
+        }
+
+    Write-Host "Microsoft Software Shadow Copy Providers: $MSSCP"
+    Write-Host "Microsoft File Share Shadow Copy Providers: $MFSSCP"
+    Write-Host "Other Providers: $OtherP"
+    Write-Host "Total Providers: $TotalP"
+
+    If ($OtherP -gt 0) {
+        $Output = "ACTIVE BACKUP CHECK 1 - FAIL - Unapproved providers found. Only the Microsoft Software Shadow Copy Provider and Microsoft File Share Shadow Copy Provider are allowed. All others must be removed." -forgroundcolor Red
+        Write-Host 
+        Return $False
+    } else {
+        Write-Host "ACTIVE BACKUP CHECK 1 - PASS - No unapproved providers found." -forgroundcolor Green
+    }
+
+Write-Host "ACTIVE BACKUP CHECK 2 - Checking vssadmin writers"
+    $VSS2 = vssadmin list writers
+
+    $Total = 0
+    $Stable = 0
+    $Unstable = 0
+
+    foreach ($line in $VSS2) {
+        If ($line -match "State:") {
+            $Total = $Total + 1
+            If ($line -notmatch "Stable") {            
+                $Unstable = $Unstable + 1              
+            } else {
+                $Stable = $Stable + 1
+            }
+        }
+    }
+
+    Write-Host "Stable Writers: $Stable"
+    Write-Host "Unstable Writers: $Unstable"
+    Write-Host "Total Writers: $Total"
+
+    If ($Unstable -gt 0) {
+        Write-Host "$Unstable unstable writers found. Restarting the Volume Shadow Copy Service."
+        Get-Service VSS | Restart-Service
+
+        $VSS3 = vssadmin list writers
+
+        $Total = 0
+        $Stable = 0
+        $Unstable = 0
+
+        foreach ($line in $VSS3) {
+            If ($line -match "State:") {
+                $Total = $Total + 1
+                If ($line -notmatch "Stable") {            
+                    $Unstable = $Unstable + 1              
+                } else {
+                    $Stable = $Stable + 1
+                }
+            }
+        }
+        Write-Host "Second Run:"
+        Write-Host "`tStable Writers: $Stable"
+        Write-Host "`tUnstable Writers: $Unstable"
+        Write-Host "`tTotal Writers: $Total"
+        If ($Unstable -gt 0) {
+            Write-Host "ACTIVE BACKUP CHECK 2 - FAIL - Unstable writers found. Restarting the Volume Shadow Copy Service."
+            Return $False
+        }
+    } else {
+        Write-Host "ACTIVE BACKUP CHECK 2 - PASS - No unstable writers found."
+    }
