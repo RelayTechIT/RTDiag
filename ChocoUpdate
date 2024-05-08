@@ -1,0 +1,31 @@
+$testchoco = & choco -v
+if (-not $testchoco) {
+    If (_InputWait -Prompt "Chocolatey is not installed. Install it now?") {
+        Write-Output Installing Chocolatey
+        Set-ExecutionPolicy Bypass -Scope Process -Force; 
+        [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; 
+        iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1')); 
+        choco feature enable -n allowGlobalConfirmation   
+    }
+}
+
+$choco = & choco outdated
+    foreach ($l in $choco) {
+        If ($l -match "Chocolatey has determined") {
+            $Pkgs = $l.trim().split(' ')[3]
+            break;
+        }
+    }
+    If ($Pkgs -gt 0) {
+        If (_InputWait -Prompt "There are $Pkgs Chocolatey packages to be updated. Update them now?") {
+            & choco upgrade all
+                If ($LASTEXITCODE -eq 0) {
+                    Write-Host "SUCCESS: Chocolatey updated $Count packages successfully!"
+                } else {
+                    Write-Host "SUCCESS: Chocolatey encountered some problems updating one or more packages. See the log for more details." -ForegroundColor Yellow
+                }
+        }
+    } else {
+        Write-Host "There are $Pkgs Chocolatey packages to be updated. Press any key to continue."
+        pause
+    }
