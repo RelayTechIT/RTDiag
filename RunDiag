@@ -1,0 +1,52 @@
+#Variables Start
+
+    $ErrorActionPreference = 'SilentlyContinue'
+    $ProgressPreference = 'SilentlyContinue'
+
+# Variables End
+
+# Functions Start
+    # Most functions that don't require security are stored in a Github public repo
+    $gURL = 'https://raw.githubusercontent.com/RelayTechIT/RTDiag/main/'
+    iwr -useb "$gURL`RTDiagFunctions" | iex
+# Functions End
+
+# Script Start
+
+# Menu
+
+
+function _ShowMenu {
+    Write-Host "##################################################"
+    Write-Host "###                                            ###"
+    Write-Host "###        Relay Tech Diagnostic v0.1          ###"
+    Write-Host "###                                            ###"
+    Write-Host "###   Select an option to continue:            ###"
+    Write-Host "###        1) SystemUptime                     ###"
+    Write-Host "###        2) WindowsTime                      ###"
+    Write-Host "###        3) WinUpdate                        ###"
+    Write-Host "###        4) ChocoUpdate                      ###"
+    Write-Host "###        5) ActiveBackupCheck                ###"
+    Write-Host "###        6) DiskCleanup                      ###"
+    Write-Host "###        7) DiskChecks                       ###"
+    Write-Host "###                                            ###"
+    Write-Host "##################################################"
+    Write-Host ""
+
+    Return Read-Host -Prompt "Enter your selection below"
+    
+}
+
+
+While (1) {
+    Switch (_ShowMenu) {
+        1 {iwr -useb "$gURL`SystemUptime" | iex}
+        2 {iwr -useb "$gURL`WindowsTime" | iex}
+        3 {iwr -useb "$gURL`RTDiagFunctions" | iex}
+        4 {iwr -useb "$gURL`ChocoUpdate" | iex}
+        5 {iwr -useb "$gURL`ActiveBackupCheck" | iex}
+        6 {iwr -useb "$gURL`DiskCleanup" | iex}
+        7 {iwr -useb "$gURL`DiskChecks" | iex}
+        Default {Write-Host "Incorrect Selection. Pick again."}
+    }
+}
