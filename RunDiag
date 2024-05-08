@@ -24,8 +24,8 @@ function _ShowMenu {
     Write-Host "###   Select an option to continue:            ###"
     Write-Host "###        1) SystemUptime                     ###"
     Write-Host "###        2) WindowsTime                      ###"
-    Write-Host "###        3) WinUpdate                        ###"
-    Write-Host "###        4) ChocoUpdate                      ###"
+    Write-Host "###        3) ChocoUpdate                      ###"
+    Write-Host "###        4) WinUpdate                        ###"
     Write-Host "###        5) ActiveBackupCheck                ###"
     Write-Host "###        6) DiskCleanup                      ###"
     Write-Host "###        7) DiskChecks                       ###"
@@ -40,7 +40,7 @@ function _ShowMenu {
 
 While (1) {
     Switch (_ShowMenu) {
-        1 {$v='WinUpdate';iwr -useb $gURL$v | iex}
+        1 {$v='SystemUptime';iwr -useb $gURL$v | iex}
         2 {$v='WindowsTime';iwr -useb $gURL$v | iex}
         3 {$v='ChocoUpdate';iwr -useb $gURL$v | iex}
         4 {$v='WinUpdate';iwr -useb $gURL$v | iex}
