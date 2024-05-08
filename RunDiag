@@ -3,6 +3,15 @@
     $ErrorActionPreference = 'SilentlyContinue'
     $ProgressPreference = 'SilentlyContinue'
 
+    $ScriptName       = 'RTDiagnostic'
+    $ScriptVers       = '0.1'
+
+    $DirBse = $Env:SystemDrive+'\RTSupport'    # Base working Directory
+
+    $LogName = ((Get-Date -UFormat "%Y.%m.%d_%R") -replace '[:]')+'_'+$env:COMPUTERNAME+'_'+$ScriptNme+'_v'+$ScriptVer
+        $LogTmp = $DirBse+'\'+$LogName+'.tmp'
+        $LogTxt = $DirBse+'\'+$LogName+'.log'
+
 # Variables End
 
 # Functions Start
@@ -12,6 +21,9 @@
 # Functions End
 
 # Script Start
+
+# Begin the script transcript to the logfile
+Start-Transcript $LogTxt
 
 # Menu
 
@@ -50,3 +62,7 @@ While (1) {
         Default {Write-Host "Incorrect Selection. Pick again."}
     }
 }
+
+
+# Stop writing to the log file
+Stop-Transcript
