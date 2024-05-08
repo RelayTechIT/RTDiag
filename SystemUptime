@@ -1,0 +1,12 @@
+switch (_Get-UptimeDays) {
+    {$_ -ge 7} {Write-Host "System uptime is $_ Days." -ForegroundColor Red}
+    {$_ -ge 5 -and $_ -lt 7} {Write-Host "System uptime is $_ Days." -ForegroundColor Yellow}
+    {$_ -ge 5} {If (_InputWait -Prompt "Windows Uptime is high. Reboot at end of script?") {
+        $Reboot = 'Now'
+    } else {
+        $Reboot = 'Later'
+    }
+    Write-Host System Reboot set to $SystemReboot; break;}
+    Default {Write-Host "System uptime is $_ Days." -ForegroundColor Green
+    break;}
+}
