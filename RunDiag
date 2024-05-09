@@ -12,6 +12,18 @@
         $LogTmp = $DirBse+'\'+$LogName+'.tmp'
         $LogTxt = $DirBse+'\'+$LogName+'.log'
 
+    $Picked =   @()
+
+    $Menu   =   @(
+        [PSCustomObject]@{Prompt = 1; DisplayName = 'System Uptime'; FunctionName = 'SystemUptime'; Description = ''}
+        [PSCustomObject]@{Prompt = 2; DisplayName = 'Windows Time'; FunctionName = 'WindowsTime'; Description = ''}
+        [PSCustomObject]@{Prompt = 3; DisplayName = 'Chocolatey Updates'; FunctionName = 'ChocoUpdate'; Description = ''}
+        [PSCustomObject]@{Prompt = 4; DisplayName = 'Windows Updates'; FunctionName = 'WinUpdate'; Description = ''}
+        [PSCustomObject]@{Prompt = 5; DisplayName = 'Active Backup Check'; FunctionName = 'ActiveBackupCheck'; Description = ''}
+        [PSCustomObject]@{Prompt = 6; DisplayName = 'Disk Cleanup'; FunctionName = 'DiskCleanup'; Description = ''}
+        [PSCustomObject]@{Prompt = 7; DisplayName = 'Disk Checks'; FunctionName = 'DiskChecks'; Description = ''}
+    )
+
 # Variables End
 
 # Functions Start
@@ -28,35 +40,32 @@ Start-Transcript $LogTxt
 # Menu
 
 
-function _ShowMenu {
-    $Steps = ("SystemUptime", "WindowsTime", "ChocoUpdate", "WinUpdate", "ActiveBackupCheck", "DiskCleanup", "DiskChecks")
-    $n = 1
-    $count = ($Steps.count)
 
+While (1) {
         $Output =   @()
         $Output +=  "Relay Tech Diagnostic version:"+$ScriptVers
         $Output +=  ""
         $Output +=  "Select an option to continue:"
-    $steps | foreach {
-        $Output +=  "   "+$n+"  -   "+$_
+    $Menu | foreach {
+        $Output +=  "   "+$_.Prompt+"  -   "+$_.DisplayName
         $n++
     }
         $Output +=  ""
         $Output +=  "   99  -   End Script"
         $Output +=  ""
-}
+        $Output | Write-Host
+        $c = Read-Host
 
-While (1) {
-    Switch (_ShowMenu) {
-        1 {$v='SystemUptime';iwr -useb $gURL$v | iex}
-        2 {$v='WindowsTime';iwr -useb $gURL$v | iex}
-        3 {$v='ChocoUpdate';iwr -useb $gURL$v | iex}
-        4 {$v='WinUpdate';iwr -useb $gURL$v | iex}
-        5 {$v='ActiveBackupCheck';iwr -useb $gURL$v | iex}
-        6 {$v='DiskCleanup';iwr -useb $gURL$v | iex}
-        7 {$v='DiskChecks';iwr -useb $gURL$v | iex}
-        99 {Break;}
-        Default {Write-Host "Incorrect Selection. Pick again."}
+    If ($c -eq 99) {
+        Write-Host "Exiting Menu." -foregroundcolor yellow; Break;
+    } elseif ($Picked.Contains($c)) {
+        Write-Host "Option" ($Menu | where Prompt -eq 1).FunctionName "previously selected. Pick another option." -foregroundcolor yellow
+    } elseif (!($Picked.Contains($c))) {
+        Write-Host "You picked" ($Menu | where Prompt -eq 1).FunctionName -foregroundcolor yellow
+        $Picked += $c
+        $url = $gURL+($Menu | where Prompt -eq 1).FunctionName; iwr -useb $url | iex
+    } else {
+        Write-Host "Incorrect Selection. Pick again." -foregroundcolor yellow
     }
 }
 
