@@ -39,8 +39,6 @@ Start-Transcript $LogTxt
 
 # Menu
 
-
-
 While (1) {
         $Output =   @()
         $Output +=  "Relay Tech Diagnostic version:"+$ScriptVers
@@ -59,11 +57,11 @@ While (1) {
     If ($c -eq 99) {
         Write-Host "Exiting Menu." -foregroundcolor yellow; Break;
     } elseif ($Picked.Contains($c)) {
-        Write-Host "Option" ($Menu | where Prompt -eq 1).FunctionName "previously selected. Pick another option." -foregroundcolor yellow
+        Write-Host "Option" ($Menu | where Prompt -eq $c).FunctionName "previously selected. Pick another option." -foregroundcolor yellow
     } elseif (!($Picked.Contains($c))) {
-        Write-Host "You picked" ($Menu | where Prompt -eq 1).FunctionName -foregroundcolor yellow
+        Write-Host "You picked" ($Menu | where Prompt -eq $c).FunctionName -foregroundcolor yellow
         $Picked += $c
-        $url = $gURL+($Menu | where Prompt -eq 1).FunctionName; iwr -useb $url | iex
+        $url = $gURL+($Menu | where Prompt -eq $c).FunctionName; iwr -useb $url | iex
     } else {
         Write-Host "Incorrect Selection. Pick again." -foregroundcolor yellow
     }
