@@ -93,3 +93,8 @@
                     Write-Host "FAILURE: " $vssWriters.Unstable "unstable writers found. This may affect future backups." -ForegroundColor Red
                 }
     }    
+
+
+Write-Host ""
+Write-Host "Press any key to go back to the main menu."
+pause
