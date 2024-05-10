@@ -13,15 +13,15 @@
         $LogTxt = $DirBse+'\'+$LogName+'.log'
 
 $PreMenu   =   @(
-    [PSCustomObject]@{DisplayName = 'Test Internet Speed'; FunctionName = 'Test-Bandwidth'}
-    [PSCustomObject]@{DisplayName = 'Check System Uptime'; FunctionName = 'Check-System-Uptime'}
-    [PSCustomObject]@{DisplayName = 'Check Windows Time'; FunctionName = 'Check-WindowsTime'}
-    [PSCustomObject]@{DisplayName = 'Set Power Management'; FunctionName = 'Set-PowerManagement'}
-    [PSCustomObject]@{DisplayName = 'Update Chocolatey Packages'; FunctionName = 'ChocoUpdate'}
-    [PSCustomObject]@{DisplayName = 'Apply Missing Windows Updates'; FunctionName = 'WinUpdate'}
-    [PSCustomObject]@{DisplayName = 'Fix Active Backup Errors'; FunctionName = 'Check-ActiveBackup'}
-    [PSCustomObject]@{DisplayName = 'Disk Space Cleanup'; FunctionName = 'Disk-Cleanup'}
-    [PSCustomObject]@{DisplayName = 'Check Disk for Issues'; FunctionName = 'Check-Disks'}
+    [PSCustomObject]@{DisplayName = 'Test Internet Speed'; FunctionName = 'RTDiag-Test-Bandwidth'}
+    [PSCustomObject]@{DisplayName = 'Check System Uptime'; FunctionName = 'RTDiag-Check-System-Uptime'}
+    [PSCustomObject]@{DisplayName = 'Check Windows Time'; FunctionName = 'RTDiag-Check-WindowsTime'}
+    [PSCustomObject]@{DisplayName = 'Set Power Management'; FunctionName = 'RTDiag-Set-PowerManagement'}
+    [PSCustomObject]@{DisplayName = 'Update Chocolatey Packages'; FunctionName = 'RTDiag-ChocoUpdate'}
+    [PSCustomObject]@{DisplayName = 'Apply Missing Windows Updates'; FunctionName = 'RTDiag-WinUpdate'}
+    [PSCustomObject]@{DisplayName = 'Fix Active Backup Errors'; FunctionName = 'RTDiag-Check-ActiveBackup'}
+    [PSCustomObject]@{DisplayName = 'Disk Space Cleanup'; FunctionName = 'RTDiag-Disk-Cleanup'}
+    [PSCustomObject]@{DisplayName = 'Check Disk for Issues'; FunctionName = 'RTDiag-Check-Disks'}
 )
 
 $n = 1
