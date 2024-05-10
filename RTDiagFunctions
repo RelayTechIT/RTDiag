@@ -53,10 +53,12 @@ function _IEXRun {
 
     If ($Output -match $Message) {
         Write-Host SUCCESS: Successfully ran command: $Command -ForegroundColor Green
+        return $true
     } else {
         Write-Host WARNING: Possible failure running command: $Command -ForegroundColor Yellow
         Write-Host Log Output below: -ForegroundColor Yellow
         Write-Host $Output -ForegroundColor Yellow
+        return $false
     }
 }
 
