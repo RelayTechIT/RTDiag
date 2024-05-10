@@ -29,3 +29,7 @@ $choco = & choco outdated
         Write-Host "There are $Pkgs Chocolatey packages to be updated. Press any key to continue."
         pause
     }
+
+Write-Host ""
+Write-Host "Press any key to go back to the main menu."
+pause
