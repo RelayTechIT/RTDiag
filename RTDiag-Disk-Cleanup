@@ -113,7 +113,3 @@ Write-Host "        Disk Size (Used):       "$EndDsk[1]"    (GB)"
 Write-Host "        Disk full (Percent):    "$EndDsk[2]"        (%)"
 Write-Host
 Write-Host "Total Disk Space Cleared:       "$EndDsk[3]"    (GB)"
-
-Write-Host ""
-Write-Host "Press any key to go back to the main menu."
-pause
