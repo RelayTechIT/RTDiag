@@ -12,20 +12,25 @@
         $LogTmp = $DirBse+'\'+$LogName+'.tmp'
         $LogTxt = $DirBse+'\'+$LogName+'.log'
 
-    $Picked =   @()
+$PreMenu   =   @(
+    [PSCustomObject]@{DisplayName = 'Test Internet Speed'; FunctionName = 'Test-Bandwidth'}
+    [PSCustomObject]@{DisplayName = 'Check System Uptime'; FunctionName = 'Check-System-Uptime'}
+    [PSCustomObject]@{DisplayName = 'Check Windows Time'; FunctionName = 'Check-WindowsTime'}
+    [PSCustomObject]@{DisplayName = 'Set Power Management'; FunctionName = 'Set-PowerManagement'}
+    [PSCustomObject]@{DisplayName = 'Update Chocolatey Packages'; FunctionName = 'ChocoUpdate'}
+    [PSCustomObject]@{DisplayName = 'Apply Missing Windows Updates'; FunctionName = 'WinUpdate'}
+    [PSCustomObject]@{DisplayName = 'Fix Active Backup Errors'; FunctionName = 'Check-ActiveBackup'}
+    [PSCustomObject]@{DisplayName = 'Disk Space Cleanup'; FunctionName = 'Disk-Cleanup'}
+    [PSCustomObject]@{DisplayName = 'Check Disk for Issues'; FunctionName = 'Check-Disks'}
+)
 
-    $Menu   =   @(
-        [PSCustomObject]@{Prompt = 1; DisplayName = 'Check System Uptime'; FunctionName = 'Check-System-Uptime'; Description = ''}
-        [PSCustomObject]@{Prompt = 2; DisplayName = 'Check Windows Time'; FunctionName = 'Check-WindowsTime'; Description = ''}
-        [PSCustomObject]@{Prompt = 3; DisplayName = 'Chocolatey Updates'; FunctionName = 'ChocoUpdate'; Description = ''}
-        [PSCustomObject]@{Prompt = 4; DisplayName = 'Windows Updates'; FunctionName = 'WinUpdate'; Description = ''}
-        [PSCustomObject]@{Prompt = 5; DisplayName = 'Check Active Backup'; FunctionName = 'Check-ActiveBackup'; Description = ''}
-        [PSCustomObject]@{Prompt = 6; DisplayName = 'Disk Cleanup'; FunctionName = 'Disk-Cleanup'; Description = ''}
-        [PSCustomObject]@{Prompt = 7; DisplayName = 'Check Disk Space'; FunctionName = 'Check-DiskSpace'; Description = ''}
-        [PSCustomObject]@{Prompt = 8; DisplayName = 'Set Power Management'; FunctionName = 'Set-PowerManagement'; Description = ''}
-        [PSCustomObject]@{Prompt = 9; DisplayName = 'Check Internet Speed'; FunctionName = 'SpeedTest'; Description = ''}
-    )
-
+$n = 1
+$Menu   =   @(
+$PreMenu | foreach {
+    [PSCustomObject]@{Prompt = $n; DisplayName = $_.DisplayName; FunctionName = $_.FunctionName; Selected = 0}
+    $n++
+    }
+)
 # Variables End
 
 # Functions Start
@@ -47,9 +52,13 @@ While (1) {
         $Output +=  ""
         $Output +=  "Select an option to continue:"
     $Menu | foreach {
-        $Output +=  "   "+$_.Prompt+"  -   "+$_.DisplayName
+        If ($_.Selected -eq 0) {
+            $Output +=  "   "+$_.Prompt+"  -   "+$_.DisplayName
+        } else {
+            $Output +=  "   X  -   "+$_.DisplayName+"   (Already Run)"
+        }
         $n++
-    }
+        }
         $Output +=  ""
         $Output +=  "   99  -   End Script"
         $Output +=  ""
@@ -58,12 +67,12 @@ While (1) {
 
     If ($c -eq 99) {
         Write-Host "Exiting Menu." -foregroundcolor yellow; Break;
-    } elseif ($Picked.Contains($c)) {
+    } elseif (($menu | where Prompt -eq $c).Selected -ne 0) {
         Write-Host "Option" ($Menu | where Prompt -eq $c).FunctionName "previously selected. Pick another option." -foregroundcolor yellow
-    } elseif (!($Picked.Contains($c))) {
-        Write-Host "You picked" ($Menu | where Prompt -eq $c).FunctionName -foregroundcolor yellow
-        $Picked += $c
-        $url = $gURL+($Menu | where Prompt -eq $c).FunctionName; iwr -useb $url | iex
+    } elseif (($menu | where Prompt -eq $c).Selected -eq 0) {
+        Write-Host "You selected" ($Menu | where Prompt -eq $c).FunctionName -foregroundcolor yellow
+        ($menu | where Prompt -eq $c).selected = 1
+#        $url = $gURL+($Menu | where Prompt -eq $c).FunctionName; iwr -useb $url | iex
     } else {
         Write-Host "Incorrect Selection. Pick again." -foregroundcolor yellow
     }
