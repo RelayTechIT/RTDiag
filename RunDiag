@@ -15,13 +15,14 @@
     $Picked =   @()
 
     $Menu   =   @(
-        [PSCustomObject]@{Prompt = 1; DisplayName = 'System Uptime'; FunctionName = 'SystemUptime'; Description = ''}
-        [PSCustomObject]@{Prompt = 2; DisplayName = 'Windows Time'; FunctionName = 'WindowsTime'; Description = ''}
+        [PSCustomObject]@{Prompt = 1; DisplayName = 'Check System Uptime'; FunctionName = 'Check-System-Uptime'; Description = ''}
+        [PSCustomObject]@{Prompt = 2; DisplayName = 'Check Windows Time'; FunctionName = 'Check-WindowsTime'; Description = ''}
         [PSCustomObject]@{Prompt = 3; DisplayName = 'Chocolatey Updates'; FunctionName = 'ChocoUpdate'; Description = ''}
         [PSCustomObject]@{Prompt = 4; DisplayName = 'Windows Updates'; FunctionName = 'WinUpdate'; Description = ''}
-        [PSCustomObject]@{Prompt = 5; DisplayName = 'Active Backup Check'; FunctionName = 'ActiveBackupCheck'; Description = ''}
-        [PSCustomObject]@{Prompt = 6; DisplayName = 'Disk Cleanup'; FunctionName = 'DiskCleanup'; Description = ''}
-        [PSCustomObject]@{Prompt = 7; DisplayName = 'Disk Checks'; FunctionName = 'DiskChecks'; Description = ''}
+        [PSCustomObject]@{Prompt = 5; DisplayName = 'Check Active Backup'; FunctionName = 'Check-ActiveBackup'; Description = ''}
+        [PSCustomObject]@{Prompt = 6; DisplayName = 'Disk Cleanup'; FunctionName = 'Disk-Cleanup'; Description = ''}
+        [PSCustomObject]@{Prompt = 7; DisplayName = 'Disk Checks'; FunctionName = 'Disk-Checks'; Description = ''}
+        [PSCustomObject]@{Prompt = 8; DisplayName = 'Set Power Management'; FunctionName = 'Set-PowerManagement'; Description = ''}
     )
 
 # Variables End
