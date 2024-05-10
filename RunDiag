@@ -72,7 +72,7 @@ While (1) {
     } elseif (($menu | where Prompt -eq $c).Selected -eq 0) {
         Write-Host "You selected" ($Menu | where Prompt -eq $c).FunctionName -foregroundcolor yellow
         ($menu | where Prompt -eq $c).selected = 1
-#        $url = $gURL+($Menu | where Prompt -eq $c).FunctionName; iwr -useb $url | iex
+        $url = $gURL+($Menu | where Prompt -eq $c).FunctionName; iwr -useb $url | iex
     } else {
         Write-Host "Incorrect Selection. Pick again." -foregroundcolor yellow
     }
