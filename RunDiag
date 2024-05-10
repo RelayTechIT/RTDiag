@@ -23,6 +23,7 @@
         [PSCustomObject]@{Prompt = 6; DisplayName = 'Disk Cleanup'; FunctionName = 'Disk-Cleanup'; Description = ''}
         [PSCustomObject]@{Prompt = 7; DisplayName = 'Disk Checks'; FunctionName = 'Check-Disks'; Description = ''}
         [PSCustomObject]@{Prompt = 8; DisplayName = 'Set Power Management'; FunctionName = 'Set-PowerManagement'; Description = ''}
+        [PSCustomObject]@{Prompt = 9; DisplayName = 'Check Internet Speed'; FunctionName = 'SpeedTest'; Description = ''}
     )
 
 # Variables End
