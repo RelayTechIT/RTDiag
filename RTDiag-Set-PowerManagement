@@ -62,9 +62,4 @@ foreach ($Arg in $Args) {
     }
 }
 
-
-Write-Host ""
-Write-Host "Press any key to go back to the main menu."
-pause
-
 # Script End
