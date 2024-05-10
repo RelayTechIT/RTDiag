@@ -22,7 +22,7 @@ $choco = & choco outdated
                 If ($LASTEXITCODE -eq 0) {
                     Write-Host "SUCCESS: Chocolatey updated $Count packages successfully!"
                 } else {
-                    Write-Host "SUCCESS: Chocolatey encountered some problems updating one or more packages. See the log for more details." -ForegroundColor Yellow
+                    Write-Host "WARNING: Chocolatey encountered some problems updating one or more packages. See the log for more details." -ForegroundColor Yellow
                 }
         }
     } else {
