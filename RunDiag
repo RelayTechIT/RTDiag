@@ -1,16 +1,17 @@
 #Variables Start
 
-    $ErrorActionPreference = 'SilentlyContinue'
-    $ProgressPreference = 'SilentlyContinue'
+$ErrorActionPreference = 'SilentlyContinue'
+$ProgressPreference = 'SilentlyContinue'
 
-    $ScriptName       = 'RTDiagnostic'
-    $ScriptVers       = '0.1'
+$ScriptName       = 'RTDiagnostic'
+$ScriptVers       = '0.1'
 
-    $DirBse = $Env:SystemDrive+'\RTSupport'    # Base working Directory
+$DirBse = $Env:SystemDrive+'\RTSupport'    # Base working Directory
 
-    $LogName = ((Get-Date -UFormat "%Y.%m.%d_%R") -replace '[:]')+'_'+$env:COMPUTERNAME+'_'+$ScriptNme+'_v'+$ScriptVer
-        $LogTmp = $DirBse+'\'+$LogName+'.tmp'
-        $LogTxt = $DirBse+'\'+$LogName+'.log'
+$LogName = ((Get-Date -UFormat "%Y.%m.%d_%R") -replace '[:]')+'_'+$env:COMPUTERNAME+'_'+$ScriptNme+'_v'+$ScriptVer
+    $LogTmp = $DirBse+'\'+$LogName+'.tmp'
+    $LogTxt = $DirBse+'\'+$LogName+'.log'
+#Put your toolset in here in the order you want them to be displayed. Top entry will be selection 1.
 
 $PreMenu   =   @(
     [PSCustomObject]@{DisplayName = 'Test Internet Speed'; FunctionName = 'RTDiag-Test-Bandwidth'}
@@ -29,8 +30,9 @@ $Menu   =   @(
 $PreMenu | foreach {
     [PSCustomObject]@{Prompt = $n; DisplayName = $_.DisplayName; FunctionName = $_.FunctionName; Selected = 0}
     $n++
-    }
+}
 )
+
 # Variables End
 
 # Functions Start
@@ -77,11 +79,7 @@ While (1) {
         Write-Host "Incorrect Selection. Pick again." -foregroundcolor yellow
     }
 
-Write-Host ""
-Write-Host "Press any key to go back to the main menu."
-pause
-
+    Write-Host ""
+    Write-Host "Press any key to go back to the main menu."
+    pause
 }
-
-# Stop writing to the log file
-Stop-Transcript
