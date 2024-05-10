@@ -76,6 +76,11 @@ While (1) {
     } else {
         Write-Host "Incorrect Selection. Pick again." -foregroundcolor yellow
     }
+
+Write-Host ""
+Write-Host "Press any key to go back to the main menu."
+pause
+
 }
 
 # Stop writing to the log file
