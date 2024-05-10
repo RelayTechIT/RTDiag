@@ -1,0 +1,29 @@
+#
+# Script.ps1
+#
+
+$ProgressPreference = 'SilentlyContinue' 
+$LCLBase = $pwd.Drive.root+'RTSupport\Utilities\SpeedTest'
+$URIBase =  'https://install.speedtest.net/app/cli'
+$ZipFile =     'ookla-speedtest-1.0.0-win64.zip'
+$ExeFile =      'SpeedTest.exe'
+
+If (!(Test-Path $LCLBase)) {New-Item $LCLBase -ItemType Directory -Force}
+If (!(test-path $LCLBase\$ExeFile)) {
+    Invoke-WebRequest -Uri "$URIBase\$ZipFile" -OutFile "$LCLBase\$ZipFile"
+    Expand-Archive $LCLBase\$ZipFile $LCLBase
+    Remove-Item $LCLBase\$ZipFile
+}
+
+$result = & $LCLBase\$ExeFile --accept-license
+
+# Server
+$result[3].trim()
+# ISP
+    $result[4].trim()
+# Latency
+    $result[5].trim()
+# Download
+    $result[7].trim()
+# Upload
+    $result[9].trim()
