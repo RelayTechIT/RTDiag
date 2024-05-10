@@ -10,7 +10,3 @@ switch (_Get-UptimeDays) {
     Default {Write-Host "System uptime is $_ Days." -ForegroundColor Green
     break;}
 }
-
-Write-Host ""
-Write-Host "Press any key to go back to the main menu."
-pause
