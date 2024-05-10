@@ -80,6 +80,6 @@ If ($Err -gt 0) {
     Write-Host "SUCCESS: All Windows Time checks successful." -ForegroundColor Green
 }
 
-
+Write-Host ""
 Write-Host "Press any key to go back to the main menu."
 pause
