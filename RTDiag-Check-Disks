@@ -1,18 +1,52 @@
 $Drives = (Get-Volume | where DriveType -eq "Fixed").DriveLetter -match '^[a-z]$'
 
 Foreach ($Drv in $Drives) {
-    _IEXRun -Command "defrag $Drv`: /A" -Message "You do not need to defragment this volume"
-    _IEXRun -Command "chkdsk $Drv`: /scan" -Message "Windows has scanned the file system and found no problems"
+If (!(_IEXRun -Command "defrag $Drv`: /A" -Message "You do not need to defragment this volume")) {
+    While (1) {
+        $c = read-input -Prompt "Defragment drive" $Drv "now? Enter YES to continue or NO to skip."
+        If ($c = "YES") {
+            _IEXRun -Command "defrag $Drv`: /u /v" -Message "The operation completed successfully."
+            break;
+        } elseif ($c = "No") {
+            break;
+        } else {
+            Write-Host "INCORRECT OPTION SELECTED."
+        }
+    }
 }
 
-Foreach ($Drv in $Drives) {
-    
+_IEXRun -Command "chkdsk $Drv`: /scan" -Message "Windows has scanned the file system and found no problems"
+
 }
 
-_IEXRun -Command "sfc /verifyonly" -Message "Windows Resource Protection did not find any integrity violations"
-# _IEXRun -Command "sfc /scannow" -Message "Windows Resource Protection did not find any integrity violations"
+If (!(_IEXRun -Command "sfc /verifyonly" -Message "Windows Resource Protection did not find any integrity violations")) {
+    While (1) {
+                $c = read-input -Prompt "Run SFC /scannow to repair issues with SFC Scan? Enter YES to continue or NO to skip."
+                If ($c = "YES") {
+                    _IEXRun -Command "sfc /scannow" -Message "Windows Resource Protection did not find any integrity violations"
+                    break;
+                } elseif ($c = "No") {
+                    break;
+                } else {
+                    Write-Host "INCORRECT OPTION SELECTED."
+                }
+            }
+        }
+
+
 _IEXRun -Command "DISM /Online /Cleanup-Image /RestoreHealth" -Message "The operation completed successfully"
-_IEXRun -Command "sfc /verifyonly" -Message "Windows Resource Protection did not find any integrity violations"
-# _IEXRun -Command "sfc /scannow" -Message "Windows Resource Protection did not find any integrity violations"
 
-defrag c: /u /v
+If (!(_IEXRun -Command "sfc /verifyonly" -Message "Windows Resource Protection did not find any integrity violations")) {
+        While (1) {
+                    $c = read-input -Prompt "Run SFC /scannow to repair issues with SFC Scan? Enter YES to continue or NO to skip."
+                    If ($c = "YES") {
+                        _IEXRun -Command "sfc /scannow" -Message "Windows Resource Protection did not find any integrity violations"
+                        break;
+                    } elseif ($c = "No") {
+                        break;
+                    } else {
+                        Write-Host "INCORRECT OPTION SELECTED."
+                    }
+                }
+            }
+
