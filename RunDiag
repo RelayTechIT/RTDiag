@@ -21,7 +21,7 @@
         [PSCustomObject]@{Prompt = 4; DisplayName = 'Windows Updates'; FunctionName = 'WinUpdate'; Description = ''}
         [PSCustomObject]@{Prompt = 5; DisplayName = 'Check Active Backup'; FunctionName = 'Check-ActiveBackup'; Description = ''}
         [PSCustomObject]@{Prompt = 6; DisplayName = 'Disk Cleanup'; FunctionName = 'Disk-Cleanup'; Description = ''}
-        [PSCustomObject]@{Prompt = 7; DisplayName = 'Disk Checks'; FunctionName = 'Check-Disks'; Description = ''}
+        [PSCustomObject]@{Prompt = 7; DisplayName = 'Check Disk Space'; FunctionName = 'Check-DiskSpace'; Description = ''}
         [PSCustomObject]@{Prompt = 8; DisplayName = 'Set Power Management'; FunctionName = 'Set-PowerManagement'; Description = ''}
         [PSCustomObject]@{Prompt = 9; DisplayName = 'Check Internet Speed'; FunctionName = 'SpeedTest'; Description = ''}
     )
