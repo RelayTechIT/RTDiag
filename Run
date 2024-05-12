@@ -14,6 +14,7 @@ $LogName = ((Get-Date -UFormat "%Y.%m.%d_%R") -replace '[:]')+'_'+$env:COMPUTERN
 #Put your toolset in here in the order you want them to be displayed. Top entry will be selection 1.
 
 $PreMenu   =   @(
+    [PSCustomObject]@{DisplayName = 'Performace Check'; FunctionName = 'RTDiag-PerfCheck'}
     [PSCustomObject]@{DisplayName = 'Test Internet Speed'; FunctionName = 'RTDiag-Test-Bandwidth'}
     [PSCustomObject]@{DisplayName = 'Check System Uptime'; FunctionName = 'RTDiag-Check-System-Uptime'}
     [PSCustomObject]@{DisplayName = 'Check Windows Time'; FunctionName = 'RTDiag-Check-WindowsTime'}
