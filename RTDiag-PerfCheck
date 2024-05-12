@@ -73,3 +73,23 @@ If ($bad -gt 0) {
 
 Write-Host ""
 Write-Host $Output -ForegroundColor $color
+
+$data = systeminfo
+$data | foreach {if ($_ -match "Original Install Date:") {$InstallDate = get-date $_.Replace('Original Install Date:','')}}
+$TimeDifference = New-TimeSpan -Start $InstallDate -End (Get-Date)
+
+$Age = @{ Hostname = $ENV:COMPUTERNAME}
+$Age.Add("TotalDays",$TimeDifference.Days)
+
+If ($Age.TotalDays -lt 365) {
+    $Age.Add("Years",0)
+} else {
+    $Age.Add("Years",[math]::Round(($Age.TotalDays / 365),0))
+}
+$Age.Add("LeapDays",[math]::Round($Years / 4,0))
+$Age.Add("Days",($Age.TotalDays - ($Age.Years * 365) + $Age.LeapDays))
+
+# Display the time difference
+Write-Host "Age of PC named:" $Age.Hostname
+Write-Host "    Years:  " $Age.Years
+Write-Host "    Days:   " $Age.Days
