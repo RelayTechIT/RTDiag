@@ -1,0 +1,40 @@
+$data = Get-CimInstance win32_WinSAT
+
+function _WIMScore {
+    param (
+        $Name,
+        $Score
+    )
+
+    If ($Score -gt 6) {
+        $color = 'Green'
+        Write-Host "Name:" $Name "Score:" $Score "(Great)" -ForegroundColor Green
+    } elseIf ($Score -lt 4) {
+        $color = 'Red'
+        Write-Host "Name:" $Name "Score:" $Score "(Bad)" -ForegroundColor Red
+        $err++
+    } else {
+          Write-Host "Name:" $Name "Score:" $Score "(Normal Range)" 
+  Write-Host "Name:" $Name "Score:" $Score "(Normal Range)"
+    
+}
+
+_WIMScore -Name "CPU Score" -Score $data.CPUScore
+_WIMScore -Name "D3D Score" -Score $data.D3DScore
+_WIMScore -Name "Disk Score" -Score $data.DiskScore
+_WIMScore -Name "Graphics Score" -Score $data.GraphicsScore
+_WIMScore -Name "Memory Score" -Score $data.MemoryScore
+
+If ($err -gt 0) {
+  Write-Host "Performance is below expected levels. Consider hardware upgrade."
+  $color = 'Red'
+} elseif ($wen -gt 0) {
+  Write-Host "Some performance is average."  
+  $color = 'yellow'
+} else {
+  $Output = "Performance is above expected levels."
+  $color = 'gray'
+}
+
+Write-Host ""
+Write-Host $Output -forgroundcolor $color
