@@ -57,22 +57,20 @@ Start-Transcript $LogTxt
 # Menu
 
 While (1) {
-        $Output =   @()
-        $Output +=  "Relay Tech Diagnostic version:"+$ScriptVers
-        $Output +=  ""
-        $Output +=  "Select an option to continue:"
+        Write-Host "Relay Tech Diagnostic version:"+$ScriptVers
+        Write-Host ""
+        Write-Host "Select an option to continue:"
     $Menu | foreach {
         If ($_.Selected -eq 0) {
-            $Output +=  "   "+$_.Prompt+"  -   "+$_.DisplayName
+            Write-Host  "   "+$_.Prompt+"  -   "+$_.DisplayName
         } else {
-            $Output +=  "   X  -   "+$_.DisplayName+"   (Already Run)"
+            Write-Host  "   X  -   "+$_.DisplayName+"   (Already Run)" -ForegroundColor Green
         }
         $n++
         }
-        $Output +=  ""
-        $Output +=  "   99  -   End Script"
-        $Output +=  ""
-        $Output | Write-Host
+        Write-Host ""
+        Write-Host "   99  -   End Script"
+        Write-Host ""
         $c = Read-Host
 
     If ($c -eq 99) {
@@ -80,7 +78,7 @@ While (1) {
     } elseif (($menu | where Prompt -eq $c).Selected -ne 0) {
         Write-Host "Option" ($Menu | where Prompt -eq $c).FunctionName "previously selected. Pick another option." -foregroundcolor yellow
     } elseif (($menu | where Prompt -eq $c).Selected -eq 0) {
-        Write-Host "You selected" ($Menu | where Prompt -eq $c).FunctionName -foregroundcolor yellow
+        Write-Host "Running " ($Menu | where Prompt -eq $c).FunctionName -foregroundcolor yellow
         ($menu | where Prompt -eq $c).selected = 1
         $url = $gURL+($Menu | where Prompt -eq $c).FunctionName; iwr -useb $url | iex
     } else {
@@ -88,6 +86,6 @@ While (1) {
     }
 
     Write-Host ""
-    Write-Host "Press any key to go back to the main menu."
+    Write-Host "Finished running" ($Menu | where Prompt -eq $c).FunctionName "Press any key to go back to the main menu." -foreground yellow
     pause
 }
