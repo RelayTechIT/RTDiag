@@ -30,6 +30,9 @@ $LogName = ((Get-Date -UFormat "%Y.%m.%d_%R") -replace '[:]')+'_'+$env:COMPUTERN
 
 # Script Start
 
+# Check Pre-Requsites
+#    iwr -useb 'https://raw.githubusercontent.com/RelayTechIT/RTDiag/main/RTDiag-PreRequsites' | iex
+
 # Check if Admin
 $IsAdmin = [bool](([System.Security.Principal.WindowsIdentity]::GetCurrent()).groups -match "S-1-5-32-544")
 if (!($IsAdmin)) {
@@ -37,7 +40,7 @@ if (!($IsAdmin)) {
 }
 
 # Check Powershell version
-if ($PSVersionTable.PSVersion.Major -lt ($MinimumPowerShellVersion.Split(".")[0]) {
+if ($PSVersionTable.PSVersion.Major -lt $MinimumPowerShellVersion.Split(".")[0]) {
     _ErrorMsg -ErrorMessage "Minimum Powershell version is $($MinimumPowerShellVersion). Update Powershell and run again."
     _ErrorMsg -ErrorMessage $PSVersionTable
 }
@@ -49,18 +52,12 @@ if ($PSVersionTable.PSVersion.Major -lt ($MinimumPowerShellVersion.Split(".")[0]
         _ErrorMsg -ErrorMessage "OS: $($Info.OSName) is not an approved Operating System."
     }
 
-If (!($ErrN)) {_Msg -type "Pass" -message "All prerequsites passed"}
-
-# Check Pre-Requsites
-#    iwr -useb 'https://raw.githubusercontent.com/RelayTechIT/RTDiag/main/RTDiag-PreRequsites' | iex
-
-# Launch menu if no errors
-If (!($ErrN)) {
+# Launch Menu if no pre-requsite errors
+If ($ErrN) {
     iwr -useb 'https://raw.githubusercontent.com/RelayTechIT/RTDiag/main/RTDiag_Menu' | iex
-#    iwr -useb "$gURL`"RTDiag-Menu" | iex
-#    _RunRTFunction -Function "RTDiag-Menu"
 } else {
-    _Msg -type "Fail" -Message "Script encountered errors and cannot continue."
-    _Msg
-    $ErrO | foreach {_Msg -type "Fail" -Message $_}
+    _Msg -type "Pass" -message "All prerequsites passed"
 }
+
+
+
