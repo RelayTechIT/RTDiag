@@ -18,7 +18,12 @@ $DirBse = $Env:SystemDrive+'\RTSupport'    # Base working Directory
 $LogName = ((Get-Date -UFormat "%Y.%m.%d_%R") -replace '[:]')+'_'+$env:COMPUTERNAME+'_'+$ScriptNme+'_v'+$ScriptVer
     $LogTmp = $DirBse+'\'+$LogName+'.tmp'
     $LogTxt = $DirBse+'\'+$LogName+'.log'
-#Put your toolset in here in the order you want them to be displayed. Top entry will be selection 1.
+
+
+# Entries below will display in the menu of the script.
+# The top-most entry will be entry 1, each entry will increment by 1.
+# To add an entry copy the below sample entry and paste it below without the # or <> characters.
+# [PSCustomObject]@{DisplayName = '<Name of Script>'; FunctionName = '<Name of Function>'}
 
 $PreMenu   =   @(
     [PSCustomObject]@{DisplayName = 'Performace Check'; FunctionName = 'RTDiag-PerfCheck'}
