@@ -99,11 +99,13 @@ function _Msg {
          $Message,
          [bool]$NoTimeStamp=$false
      )
-     If (!($NoTimeStamp)) {$TimeStamp = Get-Date -Format "yyyyMMdd-HHmmss"}+"   "
+     If (!($NoTimeStamp)) {$TimeStamp = Get-Date -Format "yyyyMMdd-HHmmss"}+"  "
  
      If ($Message) {
          if ($Type -eq "Info") {
             Write-Host "$TimeStamp`INFO:     $Message" -foregroundcolor white
+         } elseif ($Type -eq "Pass") {
+            Write-Host "$TimeStamp`SUCCESS:  $Message" -foregroundcolor green
          } elseif ($Type -eq "Warn") {
             Write-Host "$TimeStamp`WARNING:  $Message" -foregroundcolor Yellow
          } elseif ($Type -eq "Fail") {
