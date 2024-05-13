@@ -114,4 +114,14 @@ function _Msg {
      }
 }
 
+function _RunRTFunction {
+    param (
+         $Function
+     )
+ 
+     If ($Function) {
+        iwr -useb "$gURL$Function" | iex
+     }
+}
+
 # Functions End
