@@ -85,4 +85,25 @@ function _InputWait {
     }
 }
 
+function _Msg {
+    param (
+         $Type,
+         $Message,
+         [bool]$NoTimeStamp=$false
+     )
+     If (!($NoTimeStamp)) {$TimeStamp = Get-Date -Format "yyyyMMdd-HHmmss"}+"   "
+ 
+     If ($Message) {
+         if ($Type -eq "Info") {
+            Write-Host "$TimeStamp`INFO:     $Message" -foregroundcolor white
+         } elseif ($Type -eq "Warn") {
+            Write-Host "$TimeStamp`WARNING:  $Message" -foregroundcolor Yellow
+         } elseif ($Type -eq "Fail") {
+            Write-Host "$TimeStamp`FAILURE:  $Message" -foregroundcolor red
+         } else {
+            Write-Host "$Message"
+         }
+     }
+}
+
 # Functions End
