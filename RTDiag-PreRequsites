@@ -1,28 +1,22 @@
 
-# Check if Admin
-if (!
-    #current role
-    (New-Object Security.Principal.WindowsPrincipal(
-        [Security.Principal.WindowsIdentity]::GetCurrent()
-    #is admin?
-    )).IsInRole(
-        [Security.Principal.WindowsBuiltInRole]::Administrator
-    )
-) {
-    #elevate script and exit current non-elevated runtime
-    Start-Process `
-        -FilePath 'powershell' `
-        -ArgumentList (
-            #flatten to single array
-            '-File', $MyInvocation.MyCommand.Source, $args `
-            | %{ $_ }
-        ) `
-        -Verb RunAs
+# Pre-Requsite Variables
+    $ApprovedOperatingSystems    =    ('Microsoft Windows 10 Home', 'Microsoft Windows 10 Pro', 'Microsoft Windows 11 Home', 'Microsoft Windows 11 Pro')
+    $MinimumPowerShellVersion    =    "5.1"
 
-if ($PSVersionTable.PSVersion.Major -lt 5) {
-    Write-Host "Minimum Powershell version is 5.1. Update Powershell and run again." -foregroundcolor Red
-    Write-Host $PSVersionTable -foregroundcolor Red
-    Exit
+# Check if Admin
+If (!([bool](([System.Security.Principal.WindowsIdentity]::GetCurrent()).groups -match "S-1-5-32-544"))) {   
+    _ErrorMsg "This script must be run with administrative rights. Log in as an administrator and run again."
 }
 
-Write-Host "Hi"
+# Check Powershell version
+if ($PSVersionTable.PSVersion.Major -lt ($MinimumPowerShellVersion.Split(".")[0]) {
+    _ErrorMsg "Minimum Powershell version is $($MinimumPowerShellVersion). Update Powershell and run again."
+    _ErrorMsg $PSVersionTable
+}
+
+# Check Operating System
+    $Info = Get-ComputerInfo
+    $ApprovedOperatingSystems | foreach {If ($_ -match $Info.OSName) {$OSPass++}}
+    If (!($OsPass)) {
+        _ErrorMsg "OS: $($Info.OSName) is not an approved Operating System."
+    }
