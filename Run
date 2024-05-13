@@ -14,32 +14,7 @@ $LogName = ((Get-Date -UFormat "%Y.%m.%d_%R") -replace '[:]')+'_'+$env:COMPUTERN
     $LogTxt = $DirBse+'\'+$LogName+'.log'
 
 
-# Entries below will display in the menu of the script.
-# The top-most entry will be entry 1, each entry will increment by 1.
-# To add an entry copy the below sample entry and paste it below without the # or <> characters.
-# [PSCustomObject]@{DisplayName = '<Name of Script>'; FunctionName = '<Name of Function>'}
 
-$PreMenu   =   @(
-    [PSCustomObject]@{DisplayName = 'Performace Check'; FunctionName = 'RTDiag-PerfCheck'}
-    [PSCustomObject]@{DisplayName = 'Test Internet Speed'; FunctionName = 'RTDiag-Test-Bandwidth'}
-    [PSCustomObject]@{DisplayName = 'Check System Uptime'; FunctionName = 'RTDiag-Check-System-Uptime'}
-    [PSCustomObject]@{DisplayName = 'Check Windows Time'; FunctionName = 'RTDiag-Check-WindowsTime'}
-    [PSCustomObject]@{DisplayName = 'Set Power Management'; FunctionName = 'RTDiag-Set-PowerManagement'}
-    [PSCustomObject]@{DisplayName = 'Update Chocolatey Packages'; FunctionName = 'RTDiag-ChocoUpdate'}
-    [PSCustomObject]@{DisplayName = 'Apply Missing Windows Updates'; FunctionName = 'RTDiag-WinUpdate'}
-    [PSCustomObject]@{DisplayName = 'Fix Active Backup Errors'; FunctionName = 'RTDiag-Check-ActiveBackup'}
-    [PSCustomObject]@{DisplayName = 'Disk Space Cleanup'; FunctionName = 'RTDiag-Disk-Cleanup'}
-    [PSCustomObject]@{DisplayName = 'Check Disk for Issues'; FunctionName = 'RTDiag-Check-Disks'}
-    [PSCustomObject]@{DisplayName = 'DoD DISA SCAP Scan v5.9'; FunctionName = 'RTDiag-SCAPScan-v5.9'}
-)
-
-$n = 1
-$Menu   =   @(
-$PreMenu | foreach {
-    [PSCustomObject]@{Prompt = $n; DisplayName = $_.DisplayName; FunctionName = $_.FunctionName; Selected = 0}
-    $n++
-}
-)
 
 # Variables End
 
@@ -57,47 +32,11 @@ Start-Transcript $LogTxt
 # Check Pre-Requsites
     $url = $gURL+'\RTDiag-PreRequsites'; iwr -useb $url | iex
 
-# Menu
-
+# Launch menu if no errors
 If (!($ErrN)) {
-
-While (1) {
-    Write-Host "Relay Tech Diagnostic version:"+$ScriptVers
-    Write-Host ""
-    Write-Host "Select an option to continue:"
-$Menu | foreach {
-    If ($_.Selected -eq 0) {
-        Write-Host  "   " $_.Prompt "  -   " $_.DisplayName
-    } else {
-        Write-Host  "   X  -   " $_.DisplayName "   (Already Run)" -ForegroundColor Green
-    }
-    }
-    Write-Host ""
-    Write-Host "   99  -   End Script"
-    Write-Host ""
-    $c = Read-Host
-
-If ($c -eq 99) {
-    Write-Host "Exiting Menu." -foregroundcolor yellow; Break;
-} elseif (($menu | where Prompt -eq $c).Selected -ne 0) {
-    Write-Host "Option" ($Menu | where Prompt -eq $c).FunctionName "previously selected. Pick another option." -foregroundcolor yellow
-} elseif (($menu | where Prompt -eq $c).Selected -eq 0) {
-    Write-Host "Running " ($Menu | where Prompt -eq $c).FunctionName -foregroundcolor yellow
-    ($menu | where Prompt -eq $c).selected = 1
-    $url = $gURL+($Menu | where Prompt -eq $c).FunctionName; iwr -useb $url | iex
-} else {
-    Write-Host "Incorrect Selection. Pick again." -foregroundcolor yellow
-}
-
-Write-Host ""
-Write-Host "Finished running" ($Menu | where Prompt -eq $c).FunctionName "Press any key to go back to the main menu." -foreground yellow
-pause
-}
-
+    iwr -useb "$gURL`RTDiagFunctions" | iex
 } else {
     _Msg -type "Fail" -Message "Script encountered errors and cannot continue."
     _Msg
     $ErrO | foreach {_Msg -type "Fail" -Message $_}
 }
-
-
