@@ -34,7 +34,7 @@ Start-Transcript $LogTxt
 
 # Launch menu if no errors
 If (!($ErrN)) {
-    iwr -useb "$gURL`RTDiagFunctions" | iex
+    iwr -useb "$gURL`RTDiag-Menu" | iex
 } else {
     _Msg -type "Fail" -Message "Script encountered errors and cannot continue."
     _Msg
