@@ -13,8 +13,9 @@ $LogName = ((Get-Date -UFormat "%Y.%m.%d_%R") -replace '[:]')+'_'+$env:COMPUTERN
     $LogTmp = $DirBse+'\'+$LogName+'.tmp'
     $LogTxt = $DirBse+'\'+$LogName+'.log'
 
-
-
+# Pre-Requsite Variables
+    $ApprovedOperatingSystems    =    ('Microsoft Windows 10 Home', 'Microsoft Windows 10 Pro', 'Microsoft Windows 11 Home', 'Microsoft Windows 11 Pro')
+    $MinimumPowerShellVersion    =    "5.1"
 
 # Variables End
 
@@ -24,13 +25,33 @@ $LogName = ((Get-Date -UFormat "%Y.%m.%d_%R") -replace '[:]')+'_'+$env:COMPUTERN
     iwr -useb "$gURL`RTDiagFunctions" | iex
 # Functions End
 
+# Begin the script transcript to the logfile
+    Start-Transcript $LogTxt
+
 # Script Start
 
-# Begin the script transcript to the logfile
-Start-Transcript $LogTxt
+# Check if Admin
+if (!([bool](([System.Security.Principal.WindowsIdentity]::GetCurrent()).groups -match "S-1-5-32-544"))) {
+    _ErrorMsg -ErrorMessage  "This script must be run with administrative rights. Log in as an administrator and run again."
+}
+
+# Check Powershell version
+if ($PSVersionTable.PSVersion.Major -lt ($MinimumPowerShellVersion.Split(".")[0]) {
+    _ErrorMsg -ErrorMessage "Minimum Powershell version is $($MinimumPowerShellVersion). Update Powershell and run again."
+    _ErrorMsg -ErrorMessage $PSVersionTable
+}
+
+# Check Operating System
+    $Info = Get-ComputerInfo
+    $ApprovedOperatingSystems | foreach {If ($_ -match $Info.OSName) {$OSPass++}}
+    If (!($OsPass)) {
+        _ErrorMsg -ErrorMessage "OS: $($Info.OSName) is not an approved Operating System."
+    }
+
+If (!($ErrN)) {_Msg -type "Pass" -message "All prerequsites passed"}
 
 # Check Pre-Requsites
-    iwr -useb 'https://raw.githubusercontent.com/RelayTechIT/RTDiag/main/RTDiag-PreRequsites' | iex
+#    iwr -useb 'https://raw.githubusercontent.com/RelayTechIT/RTDiag/main/RTDiag-PreRequsites' | iex
 
 # Launch menu if no errors
 If (!($ErrN)) {
