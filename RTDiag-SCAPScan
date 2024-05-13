@@ -1,0 +1,50 @@
+
+$Project    =   'DISA_SCAP'
+$Version    =   '5.9'
+$lcldir     =   'C:\RTSupport\Utilities'
+$lclfldr    =   $lcldir+'\'+$Project+'\'+$Version
+$URI = 'https://dl.dod.cyber.mil/wp-content/uploads/stigs/zip/scc-'+$Version+'_Windows_bundle.zip'
+$ProgressPreference = 'SilentlyContinue' 
+$ErrorActionPreference = "Continue"
+
+Write-Host Create $lclfldr if it isnt there
+    If (!(Test-Path $lclfldr)) {new-item $lclfldr -ItemType Directory}
+
+Write-Host If the cscc process is running, stop it
+    get-process cscc -ErrorAction SilentlyContinue | stop-process
+
+write-host "Check if cscc.exe is already present and skip downloading if it is"
+    $cscc = gci -path $lclfldr -recurse cscc.exe
+        If (!($cscc)) {
+            Write-Host Download the .zip file to $lclfldr\scc-$Version`_Windows_bundle.zip
+                iwr -Uri $URI -OutFile $lclfldr\scc-$Version`_Windows_bundle.zip
+        
+            write-host locate the downloaded .zip file and extract it to $lclfldr
+                $Zip1 = gci -path $lclfldr -Recurse *.zip
+                Expand-Archive $Zip1.FullName $lclfldr -Force
+        
+            write-host locate the second .zip file and extract it to $lclfldr
+                $Zip2 = gci -path $lclfldr -recurse scc-$version`_Windows.zip 
+                Expand-Archive $Zip2.FullName $lclfldr -Force        
+        }
+
+write-host "locate cscc.exe and run it (This will take some minutes)"
+    $cscc = gci -path $lclfldr -recurse cscc.exe
+    start-process -FilePath $cscc.fullname -ArgumentList "-ea --checkForContentUpdates --installAll" -Wait -NoNewWindow
+    start-process -FilePath $cscc.fullname -ArgumentList "-ear -u $lclfldr" -Wait -NoNewWindow
+
+write-host "Zipping Results to folder $export for easy extraction"
+        $session=gci $lclfldr\sessions | ? { $_.PSIsContainer } | sort CreationTime -desc | select -f 1
+        $Export =	$lclfldr+'\_Archive\'+$Session.name+'_'+$env:COMPUTERNAME
+        New-Item $Export -itemtype Directory
+
+        $Src	= $session.fullname
+        $Dst	= $Export
+            robocopy $Src $Dst
+
+        $Src	= $session.fullname+'\Results\SCAP'
+        $Dst	= $Export+'\Results\SCAP'
+            robocopy $Src $Dst
+
+        Compress-Archive $export $export`.zip -force
+        remove-item $export -recurse -force
