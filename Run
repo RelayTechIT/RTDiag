@@ -14,8 +14,12 @@ $LogName = ((Get-Date -UFormat "%Y.%m.%d_%R") -replace '[:]')+'_'+$env:COMPUTERN
     $LogTxt = $DirBse+'\'+$LogName+'.log'
 
 # Pre-Requsite Variables
-    $ApprovedOperatingSystems    =    ('Microsoft Windows 10 Home', 'Microsoft Windows 10 Pro', 'Microsoft Windows 11 Home', 'Microsoft Windows 11 Pro')
-    $MinimumPowerShellVersion    =    "5.1"
+    $ApprovedOperatingSystems     =    @()
+    $ApprovedOperatingSystems    +=    'Microsoft Windows 10 Home'
+    $ApprovedOperatingSystems    +=    'Microsoft Windows 10 Pro'
+    $ApprovedOperatingSystems    +=    'Microsoft Windows 11 Pro'
+    $ApprovedOperatingSystems    +=    'Microsoft Windows 11 Home'
+    $ApprovedOperatingSystems    +=    'Microsoft Windows Server 2012 R2 Standard'
 
 # Variables End
 
