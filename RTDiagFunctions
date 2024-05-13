@@ -121,6 +121,7 @@ function _RunRTFunction {
  
      If ($Function) {
         iwr -useb "$gURL$Function" | iex
+        _Msg -type "Info" -Message "Launching function: $gURL$Function"
      }
 }
 
