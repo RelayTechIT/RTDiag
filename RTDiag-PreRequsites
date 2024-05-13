@@ -4,21 +4,21 @@
     $MinimumPowerShellVersion    =    "5.1"
 
 # Check if Admin
-If (!([bool](([System.Security.Principal.WindowsIdentity]::GetCurrent()).groups -match "S-1-5-32-544"))) {   
-    _ErrorMsg "This script must be run with administrative rights. Log in as an administrator and run again."
+if (!([bool](([System.Security.Principal.WindowsIdentity]::GetCurrent()).groups -match "S-1-5-32-544"))) {
+    _ErrorMsg -ErrorMessage  "This script must be run with administrative rights. Log in as an administrator and run again."
 }
 
 # Check Powershell version
 if ($PSVersionTable.PSVersion.Major -lt ($MinimumPowerShellVersion.Split(".")[0]) {
-    _ErrorMsg "Minimum Powershell version is $($MinimumPowerShellVersion). Update Powershell and run again."
-    _ErrorMsg $PSVersionTable
+    _ErrorMsg -ErrorMessage "Minimum Powershell version is $($MinimumPowerShellVersion). Update Powershell and run again."
+    _ErrorMsg -ErrorMessage $PSVersionTable
 }
 
 # Check Operating System
     $Info = Get-ComputerInfo
     $ApprovedOperatingSystems | foreach {If ($_ -match $Info.OSName) {$OSPass++}}
     If (!($OsPass)) {
-        _ErrorMsg "OS: $($Info.OSName) is not an approved Operating System."
+        _ErrorMsg -ErrorMessage "OS: $($Info.OSName) is not an approved Operating System."
     }
 
 If (!($ErrN)) {_Msg -type "Pass" -message "All prerequsites passed"}
