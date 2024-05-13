@@ -1,10 +1,4 @@
 
-if ($PSVersionTable.PSVersion.Major -lt 5) {
-    Write-Host "Minimum Powershell version is 5.1. Update Powershell and run again." -foregroundcolor Red
-    Write-Host $PSVersionTable -foregroundcolor Red
-    Exit
-}
-
 #Variables Start
 
 $ErrorActionPreference = 'SilentlyContinue'
@@ -60,7 +54,12 @@ $PreMenu | foreach {
 # Begin the script transcript to the logfile
 Start-Transcript $LogTxt
 
+# Check Pre-Requsites
+    $url = $gURL+'\RTDiag-PreRequsites'; iwr -useb $url | iex
+
 # Menu
+
+If (!($ErrN)) {
 
 While (1) {
     Write-Host "Relay Tech Diagnostic version:"+$ScriptVers
@@ -94,3 +93,11 @@ Write-Host ""
 Write-Host "Finished running" ($Menu | where Prompt -eq $c).FunctionName "Press any key to go back to the main menu." -foreground yellow
 pause
 }
+
+} else {
+    _Msg -type "Fail" -Message "Script encountered errors and cannot continue."
+    _Msg
+    $ErrO | foreach {_Msg -type "Fail" -Message $_}
+}
+
+
