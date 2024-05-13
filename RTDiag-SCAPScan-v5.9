@@ -33,7 +33,7 @@ write-host "locate cscc.exe and run it (This will take some minutes)"
     start-process -FilePath $cscc.fullname -ArgumentList "-ea --checkForContentUpdates --installAll" -Wait -NoNewWindow
     start-process -FilePath $cscc.fullname -ArgumentList "-ear -u $lclfldr" -Wait -NoNewWindow
 
-write-host "Zipping Results to folder $export for easy extraction"
+write-host "Zipping Results for easy extraction"
         $session=gci $lclfldr\sessions | ? { $_.PSIsContainer } | sort CreationTime -desc | select -f 1
         $Export =	$lclfldr+'\_Archive\'+$Session.name+'_'+$env:COMPUTERNAME
         New-Item $Export -itemtype Directory
@@ -48,3 +48,5 @@ write-host "Zipping Results to folder $export for easy extraction"
 
         Compress-Archive $export $export`.zip -force
         remove-item $export -recurse -force
+
+Write-Host "Results from this scan are located at" $export`.zip
