@@ -35,6 +35,11 @@ if (!([bool](([System.Security.Principal.WindowsIdentity]::GetCurrent()).groups 
     _ErrorMsg -ErrorMessage  "This script must be run with administrative rights. Log in as an administrator and run again."
 }
 
+# Check if Admin again
+if (!([bool](([System.Security.Principal.WindowsIdentity]::GetCurrent()).groups -match "S-1-5-32-544"))) {
+    Write-Host "FAILED. YOU NOT ADMIN"
+}
+
 # Check Powershell version
 if ($PSVersionTable.PSVersion.Major -lt ($MinimumPowerShellVersion.Split(".")[0]) {
     _ErrorMsg -ErrorMessage "Minimum Powershell version is $($MinimumPowerShellVersion). Update Powershell and run again."
