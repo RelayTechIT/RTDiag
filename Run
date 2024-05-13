@@ -54,11 +54,11 @@ if ($PSVersionTable.PSVersion.Major -lt $MinimumPowerShellVersion.Split(".")[0])
 
 # Launch Menu if no pre-requsite errors
 If ($ErrN -gt 0) {
-    _Msg -type "Pass" -message "All prerequsites passed"    
-    iwr -useb 'https://raw.githubusercontent.com/RelayTechIT/RTDiag/main/RTDiag_Menu' | iex
-} else {
     _Msg -type "Fail" -message "Prerequisite tests failed. See output for details"
     $ErrO | foreach {_Msg -type "fail" -message $_}
+} else {
+    _Msg -type "Pass" -message "All prerequsites passed"    
+    iwr -useb 'https://raw.githubusercontent.com/RelayTechIT/RTDiag/main/RTDiag_Menu' | iex
 }
 
 
