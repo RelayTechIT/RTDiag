@@ -35,6 +35,14 @@ function _DirDeleteContents {
     }
 } # _DirDeleteContents
 
+function _ErrorMsg {
+    param (
+        $ErrorMessage
+    )
+        $global:ErrO = $ErrorMessage
+        $global:ErrN++
+}
+
 function _Get-UptimeDays {
     param (
     )
