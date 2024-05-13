@@ -20,3 +20,5 @@ if ($PSVersionTable.PSVersion.Major -lt ($MinimumPowerShellVersion.Split(".")[0]
     If (!($OsPass)) {
         _ErrorMsg "OS: $($Info.OSName) is not an approved Operating System."
     }
+
+If (!($ErrN)) {_Msg -type "Pass" -message "All prerequsites passed"}
