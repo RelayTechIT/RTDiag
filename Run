@@ -31,7 +31,7 @@ $PreMenu   =   @(
     [PSCustomObject]@{DisplayName = 'Fix Active Backup Errors'; FunctionName = 'RTDiag-Check-ActiveBackup'}
     [PSCustomObject]@{DisplayName = 'Disk Space Cleanup'; FunctionName = 'RTDiag-Disk-Cleanup'}
     [PSCustomObject]@{DisplayName = 'Check Disk for Issues'; FunctionName = 'RTDiag-Check-Disks'}
-    [PSCustomObject]@{DisplayName = 'DiD DISA SCAP Scan v5.9'; FunctionName = 'RTDiag-SCAPScan-v5.9'}
+    [PSCustomObject]@{DisplayName = 'DoD DISA SCAP Scan v5.9'; FunctionName = 'RTDiag-SCAPScan-v5.9'}
 )
 
 $n = 1
