@@ -30,11 +30,13 @@ $LogName = ((Get-Date -UFormat "%Y.%m.%d_%R") -replace '[:]')+'_'+$env:COMPUTERN
 Start-Transcript $LogTxt
 
 # Check Pre-Requsites
-    $url = $gURL+'\RTDiag-PreRequsites'; iwr -useb $url | iex
+#    $url = $gURL+'RTDiag-PreRequsites'; iwr -useb $url | iex
+    _RunRTFunction -Function "RTDiag-PreRequsites"
 
 # Launch menu if no errors
 If (!($ErrN)) {
-    iwr -useb "$gURL`RTDiag-Menu" | iex
+#    iwr -useb "$gURL`RTDiag-Menu" | iex
+    _RunRTFunction -Function "RTDiag-Menu"
 } else {
     _Msg -type "Fail" -Message "Script encountered errors and cannot continue."
     _Msg
