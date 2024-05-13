@@ -1,0 +1,28 @@
+
+# Check if Admin
+if (!
+    #current role
+    (New-Object Security.Principal.WindowsPrincipal(
+        [Security.Principal.WindowsIdentity]::GetCurrent()
+    #is admin?
+    )).IsInRole(
+        [Security.Principal.WindowsBuiltInRole]::Administrator
+    )
+) {
+    #elevate script and exit current non-elevated runtime
+    Start-Process `
+        -FilePath 'powershell' `
+        -ArgumentList (
+            #flatten to single array
+            '-File', $MyInvocation.MyCommand.Source, $args `
+            | %{ $_ }
+        ) `
+        -Verb RunAs
+
+if ($PSVersionTable.PSVersion.Major -lt 5) {
+    Write-Host "Minimum Powershell version is 5.1. Update Powershell and run again." -foregroundcolor Red
+    Write-Host $PSVersionTable -foregroundcolor Red
+    Exit
+}
+
+Write-Host "Hi"
