@@ -1,52 +1,73 @@
-$Drives = (Get-Volume | where DriveType -eq "Fixed").DriveLetter -match '^[a-z]$'
 
-Foreach ($Drv in $Drives) {
-If (!(_IEXRun -Command "defrag $Drv`: /A" -Message "You do not need to defragment this volume")) {
-    While (1) {
-        $c = read-input -Prompt "Defragment drive" $Drv "now? Enter YES to continue or NO to skip."
-        If ($c = "YES") {
-            _IEXRun -Command "defrag $Drv`: /u /v" -Message "The operation completed successfully."
-            break;
-        } elseif ($c = "No") {
-            break;
-        } else {
-            Write-Host "INCORRECT OPTION SELECTED."
+$ErrorActionPreference = 'STOP'
+$ProgressPreference = 'SilentlyContinue'
+
+# Create an array of local physical disks
+try {
+    $LocalDisks = @()
+    Foreach ($Drv in (gwmi -Class win32_volume -Filter "DriveType = '3'").DriveLetter) {
+        If ($Drv.Length -eq 2) {
+            $LocalDisks += $Drv
         }
     }
 }
-
-_IEXRun -Command "chkdsk $Drv`: /scan" -Message "Windows has scanned the file system and found no problems"
-
+catch {
+    Write-Host "An error occurred:" $_ -ForegroundColor Red
 }
 
-If (!(_IEXRun -Command "sfc /verifyonly" -Message "Windows Resource Protection did not find any integrity violations")) {
-    While (1) {
-                $c = read-input -Prompt "Run SFC /scannow to repair issues with SFC Scan? Enter YES to continue or NO to skip."
-                If ($c = "YES") {
-                    _IEXRun -Command "sfc /scannow" -Message "Windows Resource Protection did not find any integrity violations"
-                    break;
-                } elseif ($c = "No") {
-                    break;
-                } else {
-                    Write-Host "INCORRECT OPTION SELECTED."
-                }
-            }
+# Check each local physical disk for fragmentation
+try {
+    $LocalDisks | foreach {
+        If (((gwmi -Class win32_volume -Filter "DriveLetter = '$_'").DefragAnalysis()).DefragRecommended) {
+            Write-Host "Drive $_ is fragmented and needs to be optimized." -ForegroundColor Yellow
+        } else {
+            Write-Host "Drive $_ is not fragmented." -ForegroundColor Green
         }
+    }
+}
+catch {
+    Write-Host "An error occurred:" $_ -ForegroundColor Red
+}
 
+# Scan each local physical disk for issues
+try {
+    $LocalDisks | foreach {
+        Write-Host "Scanning Drive $_ for issues"
+        Repair-Volume -DriveLetter $_.Replace(':','') -Scan
+    }
+}
+catch {
+    Write-Host "Errors were found when scanning drive $_"
+    Write-Host "An error occurred:" $_ -ForegroundColor Red
+}
+
+
+_IEXRun -Command "sfc /scannow" -Message "Windows Resource Protection did not find any integrity violations"
+
+function _IEXRun {
+    param (
+        $Command,
+        $Message
+    )
+
+    Write-Host Running $Command -ForegroundColor Gray
+    $Output = IEX $Command
+
+    If ($Output -match $Message) {
+        Write-Host SUCCESS: Successfully ran command: $Command -ForegroundColor Green
+        return $true
+    } else {
+        Write-Host WARNING: Possible failure running command: $Command -ForegroundColor Yellow
+        Write-Host Log Output below: -ForegroundColor Yellow
+        Write-Host $Output -ForegroundColor Yellow
+        return $false
+    }
+}
+}
+
+_IEXRun -Command "sfc /scannow" -Message "Windows Resource Protection did not find any integrity violations"
 
 _IEXRun -Command "DISM /Online /Cleanup-Image /RestoreHealth" -Message "The operation completed successfully"
 
-If (!(_IEXRun -Command "sfc /verifyonly" -Message "Windows Resource Protection did not find any integrity violations")) {
-        While (1) {
-                    $c = read-input -Prompt "Run SFC /scannow to repair issues with SFC Scan? Enter YES to continue or NO to skip."
-                    If ($c = "YES") {
-                        _IEXRun -Command "sfc /scannow" -Message "Windows Resource Protection did not find any integrity violations"
-                        break;
-                    } elseif ($c = "No") {
-                        break;
-                    } else {
-                        Write-Host "INCORRECT OPTION SELECTED."
-                    }
-                }
-            }
+_IEXRun -Command "sfc /scannow" -Message "Windows Resource Protection did not find any integrity violations"
 
