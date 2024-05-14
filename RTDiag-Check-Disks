@@ -1,4 +1,3 @@
-
 $ErrorActionPreference = 'STOP'
 $ProgressPreference = 'SilentlyContinue'
 
@@ -41,33 +40,58 @@ catch {
     Write-Host "An error occurred:" $_ -ForegroundColor Red
 }
 
-
-_IEXRun -Command "sfc /scannow" -Message "Windows Resource Protection did not find any integrity violations"
-
-function _IEXRun {
-    param (
-        $Command,
-        $Message
-    )
-
-    Write-Host Running $Command -ForegroundColor Gray
-    $Output = IEX $Command
-
-    If ($Output -match $Message) {
-        Write-Host SUCCESS: Successfully ran command: $Command -ForegroundColor Green
-        return $true
-    } else {
-        Write-Host WARNING: Possible failure running command: $Command -ForegroundColor Yellow
-        Write-Host Log Output below: -ForegroundColor Yellow
-        Write-Host $Output -ForegroundColor Yellow
-        return $false
-    }
+# Run System File Checker - SFC /scannow
+$Command = "sfc /scannow"
+$Message = "Windows Resource Protection did not find any integrity violations"
+try {
+Write-Host Running $Command -ForegroundColor Gray
+$Output = IEX $Command
+If ($Output -match $Message) {
+    Write-Host SUCCESS: Successfully ran command: $Command -ForegroundColor Green
+} else {
+    Write-Host WARNING: Possible failure running command: $Command -ForegroundColor Yellow
+    Write-Host Log Output below: -ForegroundColor Yellow
+    Write-Host $Output -ForegroundColor Yellow
 }
 }
+catch {
+    Write-Host "An error occurred:" $_ -ForegroundColor Red
+}
 
-_IEXRun -Command "sfc /scannow" -Message "Windows Resource Protection did not find any integrity violations"
 
-_IEXRun -Command "DISM /Online /Cleanup-Image /RestoreHealth" -Message "The operation completed successfully"
+# Run DISM /Online /Cleanup-Image /RestoreHealth
+$Command = "DISM /Online /Cleanup-Image /RestoreHealth"
+$Message = "The operation completed successfully"
+try {
+Write-Host Running $Command -ForegroundColor Gray
+$Output = IEX $Command
+If ($Output -match $Message) {
+    Write-Host SUCCESS: Successfully ran command: $Command -ForegroundColor Green
+} else {
+    Write-Host WARNING: Possible failure running command: $Command -ForegroundColor Yellow
+    Write-Host Log Output below: -ForegroundColor Yellow
+    Write-Host $Output -ForegroundColor Yellow
+}
+}
+catch {
+    Write-Host "An error occurred:" $_ -ForegroundColor Red
+}
 
-_IEXRun -Command "sfc /scannow" -Message "Windows Resource Protection did not find any integrity violations"
 
+# Run System File Checker - SFC /scannow a secpmd time
+$Command = "sfc /scannow"
+$Message = "Windows Resource Protection did not find any integrity violations"
+try {
+Write-Host Running $Command -ForegroundColor Gray
+$Output = IEX $Command
+If ($Output -match $Message) {
+    Write-Host SUCCESS: Successfully ran command: $Command -ForegroundColor Green
+} else {
+    Write-Host WARNING: Possible failure running command: $Command -ForegroundColor Yellow
+    Write-Host Log Output below: -ForegroundColor Yellow
+    Write-Host $Output -ForegroundColor Yellow
+}
+}
+catch {
+    Write-Host "An error occurred:" $_ -ForegroundColor Red
+}
