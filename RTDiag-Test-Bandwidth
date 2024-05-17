@@ -13,7 +13,10 @@ If (!(test-path $LCLBase\$ExeFile)) {
     Remove-Item $LCLBase\$ZipFile
 }
 
-$Results = "$((gci $LCLBase $ExeFile -Recurse).FullName) --accept-license --output-header --format=csv" | IEX | ConvertFrom-Csv
+$CMD = (gci $LCLBase $ExeFile -Recurse).FullName + " --accept-license --output-header --format=csv"
+Write-Host "Running $($CMD)"
+$Results = $CMD | IEX | ConvertFrom-Csv
+# $Results = "$((gci $LCLBase $ExeFile -Recurse).FullName) --accept-license --output-header --format=csv" | IEX | ConvertFrom-Csv
 <#
 server name    : Verizon - Baltimore, MD
 server id      : 29533
