@@ -52,8 +52,8 @@ If ($Results.'Server Name' -match "Comcast") {
     $Values.Latency.Warn = 10
     $Values.Latency.Fail = 15
 } elseif ($Results.'Server Name' -match "Verizon") {
-    $Values.Latency.Warn = 5
-    $Values.Latency.Fail = 10
+    $Values.Latency.Warn = 8
+    $Values.Latency.Fail = 15
 }
 
 
