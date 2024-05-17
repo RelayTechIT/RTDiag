@@ -1,8 +1,6 @@
-#
-# Script.ps1
-#
+$ErrorActionPreference  =   'Stop'
+$ProgressPreference     =   'SilentlyContinue'
 
-$ProgressPreference = 'SilentlyContinue' 
 $LCLBase = $pwd.Drive.root+'RTSupport\Utilities\SpeedTest'
 $URIBase =  'https://install.speedtest.net/app/cli'
 $ZipFile =     'ookla-speedtest-1.0.0-win64.zip'
@@ -15,15 +13,81 @@ If (!(test-path $LCLBase\$ExeFile)) {
     Remove-Item $LCLBase\$ZipFile
 }
 
-$result = & $LCLBase\$ExeFile --accept-license
+$Results = "$((gci $LCLBase $ExeFile -Recurse).FullName) --accept-license --output-header --format=csv" | IEX | ConvertFrom-Csv
 
-# Server
-$result[3].trim()
-# ISP
-    $result[4].trim()
-# Latency
-    $result[5].trim()
-# Download
-    $result[7].trim()
-# Upload
-    $result[9].trim()
+<#
+server name    : Verizon - Baltimore, MD
+server id      : 29533
+latency        : 3.325
+jitter         : 0.806
+packet loss    : 0
+download       : 101780063
+upload         : 115869717
+download bytes : 811696244
+upload bytes   : 1090943490
+#>
+
+$Values = @{}
+    $Values.Jitter = @{}
+        $Values.Jitter.Add("Warn",20)
+        $Values.Jitter.Add("Fail",25)
+    $Values.Download = @{}
+        $Values.Download.Add("Warn",50)
+        $Values.Download.Add("Fail",25)
+    $Values.Upload = @{}
+        $Values.Upload.Add("Warn",10)
+        $Values.Upload.Add("Fail",5)
+    $Values.'Packet Loss' = @{}
+        $Values.'Packet Loss'.Add("Warn",.5)
+        $Values.'Packet Loss'.Add("Fail",.3)
+    $Values.Latency = @{}
+        $Values.Latency.Add("Warn",10)
+        $Values.Latency.Add("Fail",15)
+    
+If ($Results.'Server Name' -match "Comcast") {
+    $Values.Latency.Warn = 10
+    $Values.Latency.Fail = 15
+} elseif ($Results.'Server Name' -match "Verizon") {
+    $Values.Latency.Warn = 5
+    $Values.Latency.Fail = 10
+}
+
+Write-Host "ISP: $($Results.'Server Name')"
+
+$v = 'Download'
+$Results.$v = [math]::round($Results.$v / 100000 * .8,2)
+switch ($Results.$v) {
+    {$_ -lt $Values.$v.fail} {Write-Host "    $($v): $($_) (FAIL)" -ForegroundColor Red; $Err++; break;}
+    {$_ -lt $Values.$v.warn} {Write-Host "    $($v): $($_) (WARN)" -ForegroundColor yellow; $Wrn++; break;}
+    {$_ -ge $Values.$v.warn} {Write-Host "    $($v): $($_) (PASS)" -ForegroundColor Green; break;}
+}
+
+$v = 'Upload'
+$Results.$v = [math]::round($Results.$v / 100000 * .8,2)
+switch ($Results.$v) {
+    {$_ -lt $Values.$v.fail} {Write-Host "    $($v): $($_) (FAIL)" -ForegroundColor Red; $Err++; break;}
+    {$_ -lt $Values.$v.warn} {Write-Host "    $($v): $($_) (WARN)" -ForegroundColor yellow; $Wrn++; break;}
+    {$_ -ge $Values.$v.warn} {Write-Host "    $($v): $($_) (PASS)" -ForegroundColor Green; break;}
+}
+
+
+$v = 'Latency'
+switch ($Results.$v) {
+    {$_ -gt $Values.$v.fail} {Write-Host "    $($v): $($_) (FAIL)" -ForegroundColor Red; $Err++; break;}
+    {$_ -gt $Values.$v.warn} {Write-Host "    $($v): $($_) (WARN)" -ForegroundColor yellow; $Wrn++; break;}
+    {$_ -le $Values.$v.warn} {Write-Host "    $($v): $($_) (PASS)" -ForegroundColor Green; break;}
+}
+
+$v = 'Jitter'
+switch ($Results.$v) {
+    {$_ -lt $Values.$v.fail} {Write-Host "    $($v): $($_) (FAIL)" -ForegroundColor Red; $Err++; break;}
+    {$_ -lt $Values.$v.warn} {Write-Host "    $($v): $($_) (WARN)" -ForegroundColor yellow; $Wrn++; break;}
+    {$_ -lt $Values.$v.warn} {Write-Host "    $($v): $($_) (PASS)" -ForegroundColor Green; break;}
+}
+
+$v = 'Packet Loss'
+switch ($Results.$v) {
+    {$_ -lt $Values.$v.fail} {Write-Host "    $($v): $($_) (FAIL)" -ForegroundColor Red; $Err++; break;}
+    {$_ -lt $Values.$v.warn} {Write-Host "    $($v): $($_) (WARN)" -ForegroundColor yellow; $Wrn++; break;}
+    {$_ -lt $Values.$v.warn} {Write-Host "    $($v): $($_) (PASS)" -ForegroundColor Green; break;}
+}
