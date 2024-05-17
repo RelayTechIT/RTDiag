@@ -14,7 +14,6 @@ If (!(test-path $LCLBase\$ExeFile)) {
 }
 
 $Results = "$((gci $LCLBase $ExeFile -Recurse).FullName) --accept-license --output-header --format=csv" | IEX | ConvertFrom-Csv
-
 <#
 server name    : Verizon - Baltimore, MD
 server id      : 29533
@@ -26,6 +25,8 @@ upload         : 115869717
 download bytes : 811696244
 upload bytes   : 1090943490
 #>
+
+
 
 $Values = @{}
     $Values.Jitter = @{}
@@ -52,6 +53,8 @@ If ($Results.'Server Name' -match "Comcast") {
     $Values.Latency.Fail = 10
 }
 
+
+
 Write-Host "ISP: $($Results.'Server Name')"
 
 $v = 'Download'
@@ -72,6 +75,7 @@ switch ($Results.$v) {
 
 
 $v = 'Latency'
+$Results.$v = $Results.$v / 1
 switch ($Results.$v) {
     {$_ -gt $Values.$v.fail} {Write-Host "    $($v): $($_) (FAIL)" -ForegroundColor Red; $Err++; break;}
     {$_ -gt $Values.$v.warn} {Write-Host "    $($v): $($_) (WARN)" -ForegroundColor yellow; $Wrn++; break;}
@@ -79,15 +83,17 @@ switch ($Results.$v) {
 }
 
 $v = 'Jitter'
+$Results.$v = $Results.$v / 1
 switch ($Results.$v) {
-    {$_ -lt $Values.$v.fail} {Write-Host "    $($v): $($_) (FAIL)" -ForegroundColor Red; $Err++; break;}
-    {$_ -lt $Values.$v.warn} {Write-Host "    $($v): $($_) (WARN)" -ForegroundColor yellow; $Wrn++; break;}
-    {$_ -lt $Values.$v.warn} {Write-Host "    $($v): $($_) (PASS)" -ForegroundColor Green; break;}
+    {$_ -gt $Values.$v.fail} {Write-Host "    $($v): $($_) (FAIL)" -ForegroundColor Red; $Err++; break;}
+    {$_ -gt $Values.$v.warn} {Write-Host "    $($v): $($_) (WARN)" -ForegroundColor yellow; $Wrn++; break;}
+    {$_ -le $Values.$v.warn} {Write-Host "    $($v): $($_) (PASS)" -ForegroundColor Green; break;}
 }
 
 $v = 'Packet Loss'
+$Results.$v = $Results.$v / 1
 switch ($Results.$v) {
-    {$_ -lt $Values.$v.fail} {Write-Host "    $($v): $($_) (FAIL)" -ForegroundColor Red; $Err++; break;}
-    {$_ -lt $Values.$v.warn} {Write-Host "    $($v): $($_) (WARN)" -ForegroundColor yellow; $Wrn++; break;}
-    {$_ -lt $Values.$v.warn} {Write-Host "    $($v): $($_) (PASS)" -ForegroundColor Green; break;}
+    {$_ -gt $Values.$v.fail} {Write-Host "    $($v): $($_) (FAIL)" -ForegroundColor Red; $Err++; break;}
+    {$_ -gt $Values.$v.warn} {Write-Host "    $($v): $($_) (WARN)" -ForegroundColor yellow; $Wrn++; break;}
+    {$_ -le $Values.$v.warn} {Write-Host "    $($v): $($_) (PASS)" -ForegroundColor Green; break;}
 }
