@@ -31,6 +31,27 @@ $LogName = ((Get-Date -UFormat "%Y.%m.%d_%R") -replace '[:]')+'_'+$env:COMPUTERN
     iwr -useb "$gURL`RTDiagFunctions" | iex
 # Functions End
 
+# Get the ID and security principal of the current user account
+$myWindowsPrincipal = New-Object System.Security.Principal.WindowsPrincipal([System.Security.Principal.WindowsIdentity]::GetCurrent())
+
+# Check if we are currently running "as Administrator"
+if ($myWindowsPrincipal.IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator)) {
+    # We are running "as Administrator" - perform your actions here
+    # ...
+    Write-Host "IS ADMIN"
+} else {
+        # Relaunch the script with elevated permissions
+    # Start-Process PowerShell -Verb RunAs -ArgumentList "-File C:\Path\To\YourScript.ps1"
+        Write-Host "IS NOT ADMIN"
+}
+# Check if Admin
+$IsAdmin = [bool](([System.Security.Principal.WindowsIdentity]::GetCurrent()).groups -match "S-1-5-32-544")
+if (!($IsAdmin)) {
+    # _ErrorMsg -ErrorMessage  "This script must be run with administrative rights. Log in as an administrator and run again."
+    start powershell -verb runas -ArgumentList {iwr -useb 'diag.relaytechit.com' | IEX}   
+}
+
+
 # Begin the script transcript to the logfile
     Start-Transcript $LogTxt
 
@@ -39,11 +60,7 @@ $LogName = ((Get-Date -UFormat "%Y.%m.%d_%R") -replace '[:]')+'_'+$env:COMPUTERN
 # Check Pre-Requsites
 #    iwr -useb 'https://raw.githubusercontent.com/RelayTechIT/RTDiag/main/RTDiag-PreRequsites' | iex
 
-# Check if Admin
-$IsAdmin = [bool](([System.Security.Principal.WindowsIdentity]::GetCurrent()).groups -match "S-1-5-32-544")
-if (!($IsAdmin)) {
-    _ErrorMsg -ErrorMessage  "This script must be run with administrative rights. Log in as an administrator and run again."
-}
+
 
 # Check Powershell version
 if ($PSVersionTable.PSVersion.Major -lt $MinimumPowerShellVersion.Split(".")[0]) {
