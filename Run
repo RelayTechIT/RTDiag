@@ -38,9 +38,9 @@ $myWindowsPrincipal = New-Object System.Security.Principal.WindowsPrincipal([Sys
 $IsAdmin = [bool](([System.Security.Principal.WindowsIdentity]::GetCurrent()).groups -match "S-1-5-32-544")
 if (!($IsAdmin)) {
 #    # _ErrorMsg -ErrorMessage  "This script must be run with administrative rights. Log in as an administrator and run again."
-#    start powershell -verb runas -ArgumentList {iwr -useb 'diag.relaytechit.com' | IEX}
- $CommandLine = "-File `"" + $MyInvocation.MyCommand.Path + "`" " + $MyInvocation.UnboundArguments
-  Start-Process -FilePath PowerShell.exe -Verb Runas -ArgumentList $CommandLine
+    start powershell -verb runas -ArgumentList {iwr -useb 'diag.relaytechit.com' | IEX}
+# $CommandLine = "-File `"" + $MyInvocation.MyCommand.Path + "`" " + $MyInvocation.UnboundArguments
+#  Start-Process -FilePath PowerShell.exe -Verb Runas -ArgumentList $CommandLine
   Exit
 }
 
