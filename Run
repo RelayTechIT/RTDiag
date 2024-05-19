@@ -35,20 +35,23 @@ $LogName = ((Get-Date -UFormat "%Y.%m.%d_%R") -replace '[:]')+'_'+$env:COMPUTERN
 $myWindowsPrincipal = New-Object System.Security.Principal.WindowsPrincipal([System.Security.Principal.WindowsIdentity]::GetCurrent())
 
 # # Check if Admin
-# $IsAdmin = [bool](([System.Security.Principal.WindowsIdentity]::GetCurrent()).groups -match "S-1-5-32-544")
-# if (!($IsAdmin)) {
+$IsAdmin = [bool](([System.Security.Principal.WindowsIdentity]::GetCurrent()).groups -match "S-1-5-32-544")
+if (!($IsAdmin)) {
 #    # _ErrorMsg -ErrorMessage  "This script must be run with administrative rights. Log in as an administrator and run again."
 #    start powershell -verb runas -ArgumentList {iwr -useb 'diag.relaytechit.com' | IEX}
-# }
-
-# Self-elevate the script if required
-if (-Not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] 'Administrator')) {
- if ([int](Get-CimInstance -Class Win32_OperatingSystem | Select-Object -ExpandProperty BuildNumber) -ge 6000) {
-  $CommandLine = "-File `"" + $MyInvocation.MyCommand.Path + "`" " + $MyInvocation.UnboundArguments
+ $CommandLine = "-File `"" + $MyInvocation.MyCommand.Path + "`" " + $MyInvocation.UnboundArguments
   Start-Process -FilePath PowerShell.exe -Verb Runas -ArgumentList $CommandLine
   Exit
- }
 }
+
+# Self-elevate the script if required
+# if (-Not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] 'Administrator')) {
+#  if ([int](Get-CimInstance -Class Win32_OperatingSystem | Select-Object -ExpandProperty BuildNumber) -ge 6000) {
+#  $CommandLine = "-File `"" + $MyInvocation.MyCommand.Path + "`" " + $MyInvocation.UnboundArguments
+#  Start-Process -FilePath PowerShell.exe -Verb Runas -ArgumentList $CommandLine
+#  Exit
+# }
+#}
 
 # Begin the script transcript to the logfile
     Start-Transcript $LogTxt
