@@ -1,0 +1,9 @@
+If (!$url){$url = read-host "Enter URL of code to run"}
+
+try {
+    iwr -useb $IEXURL | IEX
+}
+catch {
+    Write-Error ($_ | Out-String)
+}
+
