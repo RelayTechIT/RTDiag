@@ -1,0 +1,69 @@
+<#
+quser
+ USERNAME              SESSIONNAME        ID  STATE   IDLE TIME  LOGON TIME
+ andrewmcginnis                            2  Disc            3  5/23/2024 8:49 AM
+ robertmcginnis        console             3  Active      none   5/23/2024 8:50 AM
+
+query session
+ SESSIONNAME       USERNAME                 ID  STATE   TYPE        DEVICE
+ services                                    0  Disc
+>console           RobertMcGinnis            1  Active
+ 7a78855482a04...                        65536  Listen
+ rdp-tcp                                 65537  Listen
+
+query session
+ SESSIONNAME       USERNAME                 ID  STATE   TYPE        DEVICE 
+>services                                    0  Disc                        
+                   AndrewMcGinnis            2  Disc                        
+ console           RobertMcGinnis            3  Active                      
+
+$Results = "$($exe.FullName) --accept-license --output-header --format=csv" | IEX | ConvertFrom-Csv
+
+$q = quser
+$q | foreach {$_}
+$q.count
+3
+
+$Disc
+1
+$Active
+1
+$Total
+2
+
+$q[2] -replace '\s+', ' '
+ robertmcginnis console 3 Active none 5/23/2024 8:50 AM
+
+($q[2] -replace '\s+', ' ').trim()
+robertmcginnis console 3 Active none 5/23/2024 8:50 AM
+
+($q[2] -replace '\s+', ' ').trim().split(" ")
+robertmcginnis
+console
+3
+Active
+none
+5/23/2024
+8:50
+AM
+#>
+
+$q = quser
+$q | foreach {$_}
+$q.count
+3
+
+$q | foreach {
+  If ($_ -match "Disc") {
+    $Disc++
+    $Total++
+    If ($_ -match "console") {
+    }
+    
+  } elseif ($_ -match "Active") {
+    $Active++
+    $Total++
+  }
+  
+}
+
