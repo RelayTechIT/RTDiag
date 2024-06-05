@@ -1,4 +1,10 @@
-$testchoco = & choco -v
+$ErrorActionPreference = 'stop'
+    try { $testchoco = & choco -v }
+    catch {
+        Write-Host "An error occurred:"
+        Write-Host $_
+    }
+
 if (-not $testchoco) {
     If (_InputWait -Prompt "Chocolatey is not installed. Install it now?") {
         Write-Output Installing Chocolatey
