@@ -1,0 +1,63 @@
+$Total = 0
+$Active = 0
+$Disc = 0
+quser | foreach {
+    If ($_ -match " Active ") {
+        $Total++
+        $Active++
+        if ($_ -match " console ") {
+            $usr = ($_ -replace ' {2,}', ";").trim().split(";")
+            Write-Host "Username:   $($usr[0])"
+            Write-Host "Console:    $($usr[1])"
+            Write-Host "SessionID:  $($usr[2])"
+            Write-Host "Status:     $($usr[3])"
+            Write-Host "Idle Time:  $($usr[4])"
+            Write-Host "Logon Time: $($usr[5])"
+        } else {
+            $usr = ($_ -replace ' {2,}', ";").trim().split(";")
+            Write-Host "Username:   $($usr[0])"
+            Write-Host "SessionID:  $($usr[1])"
+            Write-Host "Status:     $($usr[2])"
+            Write-Host "Idle Time:  $($usr[3])"
+            Write-Host "Logon Time: $($usr[4])"
+        }
+    } elseif ($_ -match " Disc ") {
+        $Total++
+        $Disc++
+        if ($_ -match " console ") {
+            $usr = ($_ -replace ' {2,}', ";").trim().split(";")
+            Write-Host "Username:   $($usr[0])"
+            Write-Host "Console:    $($usr[1])"
+            Write-Host "SessionID:  $($usr[2])"
+            Write-Host "Status:     $($usr[3])"
+            Write-Host "Idle Time:  $($usr[4])"
+            Write-Host "Logon Time: $($usr[5])"
+        } else {
+            $usr = ($_ -replace ' {2,}', ";").trim().split(";")
+            Write-Host "Username:   $($usr[0])"
+            Write-Host "SessionID:  $($usr[1])"
+            Write-Host "Status:     $($usr[2])"
+            Write-Host "Idle Time:  $($usr[3])"
+            Write-Host "Logon Time: $($usr[4])"
+        }
+    }
+}
+
+Write-Host "There are $($Total) users logged in to $($ENV:ComputerName):"
+Write-Host "    Active Users:         $($Active)"
+Write-Host "    Disconnected Users:   $($Disc)"
+Write-Host ""
+
+If ($Disc -gt 0) {
+    Write-Host "There are $($Disc) disconnected users. Log them off now?"
+    $choice = Read-Host -Prompt "Enter YES to disconnect or NO to continue."
+    If ($choice -eq "YES") {
+        quser | foreach {
+            If ($_ -match " Disc ") {
+                $usr = ($_ -replace ' {2,}', ";").trim().split(";")
+                Write-Host "Resetting User: $($usr[0]) with Session ID: $($Usr[1])"
+                Reset Session $Usr[1]
+            }
+        }
+    }
+}
