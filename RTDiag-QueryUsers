@@ -50,7 +50,8 @@ Write-Host ""
 
 If ($Disc -gt 0) {
     Write-Host "There are $($Disc) disconnected users. Log them off now?"
-    $choice = Read-Host -Prompt "Enter YES to disconnect or NO to continue."
+    Write-Host "Enter YES to disconnect or NO to continue."
+    $choice = Read-Host
     If ($choice -eq "YES") {
         quser | foreach {
             If ($_ -match " Disc ") {
