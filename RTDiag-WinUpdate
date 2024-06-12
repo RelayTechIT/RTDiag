@@ -1,4 +1,67 @@
-    $GetWin = Get-WindowsUpdate
+
+$ErrorActionPreference = 'Stop'
+$ProgressPreference = 'SilentlyContinue'
+
+remove-variable GetWin -ea silentlycontinue
+
+While (!$GetWin) {
+    try {
+        Write-Host "Checking for available Windows Updates..."
+        $GetWin = Get-WindowsUpdate
+        If ($GetWin) {
+            Write-Host "There are" $Getwin.Count "packages waiting to be installed."
+                try {
+                    If (_InputWait -Prompt "There are $Count windows updates waiting to be installed.. Update them now?") {
+                        Write-Host "Installing Windows Updates..."
+                        Install-WindowsUpdate -MicrosoftUpdate -AcceptAll -IgnoreReboot
+                        Break;
+                    }
+                } catch {
+                    Write-Host "An error occurred:" $_ -ForegroundColor Red
+                    Break;
+                }
+        } else {
+            Write-Host "There are currently no Windows Updates to apply" -ForegroundColor Yellow
+            Break;
+        }
+    }
+    catch {
+        try {
+            If (!($GetWin)) {
+                Write-Host "Windows Update Module is not installed. Installing it now." -ForegroundColor Yellow
+                    If ((Get-ExecutionPolicy) -ne "RemoteSigned") {
+                        Write-Host "Setting ExecutionPolicy to RemoteSigned" -foreground yellow
+                        Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Force; 
+                    } else {
+                        Write-Host "ExecutionPolicy already set to RemoteSigned" -foreground green
+                    };
+                    if (!(Get-PackageProvider -ListAvailable -Name NuGet -ea silentlycontinue)) {
+                        Write-Host "Getting PackageProvider NuGet" -ForegroundColor yellow
+                        Get-PackageProvider -Name NuGet -Force
+                    } else {
+                        Write-Host "PackageProvider NuGet already present" -ForegroundColor green
+                    };
+                    if (!(Get-Module -ListAvailable -Name PSWindowsUpdate -ea silentlycontinue)) {
+                        Write-Host "Installing Module PSWindowsUpdate" -ForegroundColor Yellow
+                        Install-Module -Name PSWindowsUpdate -Force
+                    } else {
+                        Write-Host "PSWindowsUpdate is installed" -ForegroundColor Green
+                    };
+                        Get-Package -Name PSWindowsUpdate -Force; 
+#                    $GetWin = Get-WindowsUpdate
+            }   
+        }
+        catch {
+            Write-Host "An error occurred:" $_ -ForegroundColor Red
+        }
+    }
+}
+
+
+
+
+
+$GetWin = Get-WindowsUpdate
     $Count = $GetWin.Count
 
     If (!($GetWin)) {
@@ -22,3 +85,5 @@
             Install-WindowsUpdate -MicrosoftUpdate -AcceptAll -IgnoreReboot
         }
     } 
+
+
