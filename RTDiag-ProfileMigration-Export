@@ -1,0 +1,164 @@
+
+# Chrome or Edge User Profile Migration
+
+# Self-elevate the script if required
+if (-Not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] 'Administrator')) {
+    if ([int](Get-CimInstance -Class Win32_OperatingSystem | Select-Object -ExpandProperty BuildNumber) -ge 6000) {
+     $CommandLine = "-File `"" + $MyInvocation.MyCommand.Path + "`" " + $MyInvocation.UnboundArguments
+     Start-Process -FilePath PowerShell.exe -Verb Runas -ArgumentList $CommandLine
+     Exit
+    }
+   }
+
+
+# Script Start
+$Direction    =  'UNKNOWN'
+$CompanyName  =  ''
+$ExtDrive     =  ''
+
+$CompanyName =	'' # Company Name as it appears in Monitoring System
+If (!($CompanyName)) {$CompanyName = read-host -prompt 'Enter value for Customer (Company) Name'}
+
+# $ScriptDrive = (Get-Location).drive.name
+
+If (!($ExtDrive)) {$ExtDrive = read-host -prompt 'Enter Drive Letter for External Drive'}
+$USB = $ExtDrive+':\Customers\'+$CompanyName+'\UserProfileMigration\'+$Env:UserDomain+'_'+$Env:USERNAME
+
+# $USB = $ScriptDrive+':\Customers\'+$CompanyName+'\UserProfileMigration\'+$Env:UserDomain+'_'+$Env:USERNAME
+# $USB='U:\'+$CompanyName+'\UserProfileMigration\'+$Env:UserDomain+'_'+$Env:USERNAME
+
+[void][Reflection.Assembly]::LoadWithPartialName('Microsoft.VisualBasic')
+$title = 'Information'
+$msg   = 'Enter your information below:'
+$text = [Microsoft.VisualBasic.Interaction]::InputBox($msg, $title)
+
+    While (!text) {
+
+    }
+
+$wshell = New-Object -ComObject Wscript.Shell
+$Output = $wshell.Popup("Are you exporting from this machine?",0,"Question",4+32)
+    # 6 = YES
+    # 7 = NO
+
+If ($Output -eq 6) {$Direction = 'EXPORT'}
+
+If ($Direction -ne 'EXPORT') {
+    $wshell = New-Object -ComObject Wscript.Shell
+    $Output = $wshell.Popup("Would you like to $Direction $ApplicationPublisher $ApplicationName profile data?",0,"$Direction`: $ApplicationName",4+32)
+    # 6 = YES
+    # 7 = NO
+
+    If ($Output -eq 6) {$Direction = 'IMPORT'}
+}
+
+# Write-Host Direction is $Direction
+# pause
+
+If ($Direction -eq 'EXPORT') {
+    Write-Host Direction is $Direction
+    Write-Host USB is set to $USB
+    pause
+
+    # Chrome Export
+        $ApplicationName='Chrome'
+        $ApplicationPublisher='Google'
+
+        $wshell = New-Object -ComObject Wscript.Shell
+        $Output = $wshell.Popup("Would you like to $Direction $ApplicationPublisher $ApplicationName profile data?",0,"$Direction`: $ApplicationName",4+32)
+            # 6 = YES
+            # 7 = NO
+
+        If ($Output -eq 6) {  
+            If (!(test-path $USB)) {new-item $USB -ItemType Directory -Force}
+
+            Write-Host "Closing any open $ApplicationPublisher $ApplicationName windows"
+            get-process -Name *$ApplicationName* | Stop-Process
+            Copy-Item -Path $Env:LOCALAPPDATA\$ApplicationPublisher\$ApplicationName -Destination $USB -Recurse -Verbose
+            & reg export HKCU\Software\$ApplicationPublisher\$ApplicationName\PreferenceMACs $USB\$ApplicationName`.reg
+        }
+
+    # Edge Export
+        $ApplicationName='Edge'
+        $ApplicationPublisher='Microsoft'
+
+        $wshell = New-Object -ComObject Wscript.Shell
+        $Output = $wshell.Popup("Would you like to $Direction $ApplicationPublisher $ApplicationName profile data?",0,"$Direction`: $ApplicationName",4+32)
+            # 6 = YES
+            # 7 = NO
+
+        If ($Output -eq 6) {  
+            If (!(test-path $USB)) {new-item $USB -ItemType Directory -Force}
+
+            Write-Host "Closing any open $ApplicationPublisher $ApplicationName windows"
+            get-process -Name *$ApplicationName* | Stop-Process
+            Copy-Item -Path $Env:LOCALAPPDATA\$ApplicationPublisher\$ApplicationName -Destination $USB -Recurse -Verbose
+            & reg export HKCU\Software\$ApplicationPublisher\$ApplicationName\PreferenceMACs $USB\$ApplicationName`.reg
+        }
+    
+    # User Documents Export
+        $wshell = New-Object -ComObject Wscript.Shell
+        $Output = $wshell.Popup("User Documents $Direction not supported. Copy files manually to $USB.",0,"$Direction`: User Files",0+32)
+        
+        # $Folders=("Contacts","Documents","Downloads","Favorites","Links","Music","Videos")
+        #    foreach ($f in $Folders) {
+        #        Copy-Item -Path $Env:USERPROFILE\$f -Destination $USB -Recurse -Verbose
+        #    }
+    
+}
+
+
+If ($Direction -eq 'IMPORT') {
+    # Chrome Import
+        $ApplicationName='Chrome'
+        $ApplicationPublisher='Google'
+
+        $wshell = New-Object -ComObject Wscript.Shell
+        $Output = $wshell.Popup("Would you like to $Direction $ApplicationPublisher $ApplicationName profile data?",0,"$Direction $ApplicationName",4+32)
+            # 6 = YES
+            # 7 = NO
+
+        If ($Output -eq 6) {        
+
+            Write-Host "Closing any open $ApplicationPublisher $ApplicationName windows"
+
+            get-process -Name *$ApplicationName* | Stop-Process
+                If (test-path $USB\$ApplicationName) {
+                    Copy-Item -Path $USB\$ApplicationName -Destination $Env:LOCALAPPDATA\$ApplicationPublisher -Recurse -Force -Verbose
+                    & reg import $USB\$ApplicationName`.reg
+                } else {
+                    Write-Host Import files missing. Unable to continue.
+                }
+        }
+
+    # Edge Import
+        $ApplicationName='Edge'
+        $ApplicationPublisher='Microsoft'
+
+        $wshell = New-Object -ComObject Wscript.Shell
+        $Output = $wshell.Popup("Would you like to $Direction $ApplicationPublisher $ApplicationName profile data?",0,"$Direction $ApplicationName",4+32)
+            # 6 = YES
+            # 7 = NO
+
+        If ($Output -eq 6) {        
+            Write-Host "Closing any open $ApplicationPublisher $ApplicationName windows"
+            get-process -Name *$ApplicationName* | Stop-Process
+
+            If (test-path $USB\$ApplicationName) {
+                Copy-Item -Path $USB\$ApplicationName -Destination $Env:LOCALAPPDATA\$ApplicationPublisher -Recurse -Force -Verbose
+                & reg import $USB\$ApplicationName`.reg
+            } else {
+                Write-Host Import files missing. Unable to continue.
+            }
+        }
+
+    # User Documents Export
+        $wshell = New-Object -ComObject Wscript.Shell
+        $Output = $wshell.Popup("User Documents $Direction not supported. Copy files manually to $USB.",0,"$Direction`: User Files",0+32)
+           
+        # $Folders=("Contacts","Documents","Downloads","Favorites","Links","Music","Videos")
+        # foreach ($f in $Folders) {
+        #     Copy-Item -Path $USB -Destination $env:USERPROFILE
+        # }
+        
+}
