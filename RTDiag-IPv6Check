@@ -1,0 +1,19 @@
+
+Get-NetAdapterBinding | Where {$_.ComponentID -eq "ms_tcpip6"} | foreach {
+  if ($_.Enabled) {
+    Write-Host "ENABLED"
+    $IPv6EnabledInterfaces++
+    Write-Host "Alias: $($_.ifAlias) Desc: $($_.ifDesc) IPv6Enabled: $($_.Enabled)"
+  } else {
+    Write-Host "DISABLED"
+    Write-Host "Alias: $($_.ifAlias) Desc: $($_.ifDesc) IPv6Enabled: $($_.Enabled)"
+  }
+}
+
+if ($IPv6EnabledInterfaces) {
+  if (_InputWait -Prompt "There are $($IPv6EnabledInterfaces) found on this system. Disable them now?") {
+    Get-NetAdapterBinding | Where {$_.ComponentID -eq "ms_tcpip6"} | Where {$_.Enabled} | Disable-NetAdapterBinding
+    }
+  } else {
+    Write-Host "Did not disable any IPv6 interfaces"
+  }
