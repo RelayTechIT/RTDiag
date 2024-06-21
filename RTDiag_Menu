@@ -6,6 +6,7 @@
 
 $PreMenu   =   @(
     [PSCustomObject]@{DisplayName = 'Performace Check'; FunctionName = 'RTDiag-PerfCheck'}
+    [PSCustomObject]@{DisplayName = 'IPv6 Check'; FunctionName = 'RTDiag-IPv6Check'}
     [PSCustomObject]@{DisplayName = 'Test Internet Speed'; FunctionName = 'RTDiag-Test-Bandwidth'}
     [PSCustomObject]@{DisplayName = 'Check System Uptime'; FunctionName = 'RTDiag-Check-System-Uptime'}
     [PSCustomObject]@{DisplayName = 'Check Windows Time'; FunctionName = 'RTDiag-Check-WindowsTime'}
