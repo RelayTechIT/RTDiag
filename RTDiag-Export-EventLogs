@@ -2,15 +2,23 @@ $ProgressPreference = 'SilentlyContinue'
 $n = 0
 $Date = get-date -Format yyyyMMddhhmmss
 $OutDir = 'C:\RTSupport\Logs\EventLogs'
-If (!(Test-Path "$($OutDir)\$($Date)")) {new-item "$($OutDir)\$($Date)" -ItemType Directory -force}
+
+Write-Verbose "Testing for existance of folder $($OutDir)\$($Date)"
+If (!(Test-Path "$($OutDir)\$($Date)")) {
+    Write-Verbose "$($OutDir)\$($Date) does not exist. Creating folder."
+    new-item "$($OutDir)\$($Date)" -ItemType Directory -force
+}
 
 $GetEvtLog = Get-EventLog -List
     foreach ($log in $GetEvtLog) {
         $n++
-        write-host "Exporting the $($log.Log) Log $($n) of $($GetEvtLog.count)"
+        write-Verbose "Exporting the $($log.Log) Log $($n) of $($GetEvtLog.count)"
+        
         $OutPath = $OutDir+'\'+$Date+'\'+$log.log+'_'+$ENV:ComputerName+'_EventLog.evtx'
         $logfile = Get-CimInstance Win32_NTEventlogFile | Where-Object LogfileName -EQ "$($log.log)"
         Invoke-CimMethod -InputObject $logfile -MethodName BackupEventLog -Arguments @{ ArchiveFileName = $OutPath }
     }
+write-Verbose "Compressing files in $($OutDir)\$($Date) to $($OutDir)\$($Date)_$($ENV:COMPUTERNAME)_EventLogs.zip"
 Compress-Archive -Path "$($OutDir)\$($Date)" -DestinationPath "$($OutDir)\$($Date)_$($ENV:COMPUTERNAME)_EventLogs.zip"
+write-Verbose "Deleting folder $($OutDir)\$($Date)"
 Remove-Item "$($OutDir)\$($Date)" -Recurse -force
