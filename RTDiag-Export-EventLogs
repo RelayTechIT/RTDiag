@@ -1,0 +1,14 @@
+# Exports all event logs to an Output Directory
+
+$n = 0
+$OutputDir = 'C:\RTSupport\Logs\EventLogs'
+If (!(Test-Path $OutputDir)) {new-item $OutputDir -ItemType Directory -force}
+
+$GetEventLog = Get-EventLog -List
+    foreach ($log in $GetEventLog) {
+        $n++
+        write-host "Exporting the $($log.Log) Log $($n) of $($GetEventLog.count)"
+        $OutputPath = $OutputDir+'\'+(get-date -Format yyyyMMddhhmmss)+'_'+$ENV:ComputerName+'_'+$log.log+'_EventLog.evtx'
+        $logfile = Get-CimInstance Win32_NTEventlogFile | Where-Object LogfileName -EQ "$($log.log)"
+        Invoke-CimMethod -InputObject $logfile -MethodName BackupEventLog -Arguments @{ ArchiveFileName = $OutputPath }
+    }
