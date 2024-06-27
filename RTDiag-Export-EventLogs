@@ -1,15 +1,26 @@
-$ProgressPreference = 'SilentlyContinue'
-$n = 0
-$Date = get-date -Format yyyyMMddhhmmss
-$OutDir = 'C:\RTSupport\Logs\EventLogs'
+# Export-EventLogs
+# Exports all event logs to a .zip file for examination
 
-Write-Verbose "Testing for existance of folder $($OutDir)\$($Date)"
-If (!(Test-Path "$($OutDir)\$($Date)")) {
-    Write-Verbose "$($OutDir)\$($Date) does not exist. Creating folder."
-    new-item "$($OutDir)\$($Date)" -ItemType Directory -force
-}
+$ErrorActionPreference  =   'Stop'
+$ProgressPreference     =   'SilentlyContinue'
+$VerbosePreference      =   'Continue'
 
-$GetEvtLog = Get-EventLog -List
+#Variables
+    $n = 0
+    $Date = get-date -Format yyyyMMddhhmmss
+    $OutDir     =   "$($env:SystemDrive)\RTSupport\Logs\EventLogs"
+
+# Script Start
+
+try {
+    Write-Verbose "Testing for existance of folder $($OutDir)\$($Date)"
+
+    If (!(Test-Path "$($OutDir)\$($Date)")) {
+        Write-Verbose "$($OutDir)\$($Date) does not exist. Creating folder."
+        new-item "$($OutDir)\$($Date)" -ItemType Directory -force
+    }
+
+    $GetEvtLog = Get-EventLog -List
     foreach ($log in $GetEvtLog) {
         $n++
         write-Verbose "Exporting the $($log.Log) Log $($n) of $($GetEvtLog.count)"
@@ -18,7 +29,14 @@ $GetEvtLog = Get-EventLog -List
         $logfile = Get-CimInstance Win32_NTEventlogFile | Where-Object LogfileName -EQ "$($log.log)"
         Invoke-CimMethod -InputObject $logfile -MethodName BackupEventLog -Arguments @{ ArchiveFileName = $OutPath }
     }
-write-Verbose "Compressing files in $($OutDir)\$($Date) to $($OutDir)\$($Date)_$($ENV:COMPUTERNAME)_EventLogs.zip"
-Compress-Archive -Path "$($OutDir)\$($Date)" -DestinationPath "$($OutDir)\$($Date)_$($ENV:COMPUTERNAME)_EventLogs.zip"
-write-Verbose "Deleting folder $($OutDir)\$($Date)"
-Remove-Item "$($OutDir)\$($Date)" -Recurse -force
+
+    write-Verbose "Compressing files in $($OutDir)\$($Date) to $($OutDir)\$($Date)_$($ENV:COMPUTERNAME)_EventLogs.zip"
+        Compress-Archive -Path "$($OutDir)\$($Date)" -DestinationPath "$($OutDir)\$($Date)_$($ENV:COMPUTERNAME)_EventLogs.zip"
+    write-Verbose "Deleting folder $($OutDir)\$($Date)"
+        Remove-Item "$($OutDir)\$($Date)" -Recurse -force
+
+}
+catch {
+  Write-Host "An error occurred:"
+  Write-Host $_
+}
