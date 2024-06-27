@@ -1,3 +1,9 @@
+
+# Check Operating System
+    $Info = Get-ComputerInfo
+    If ($Info.OSName -Match "Home") {
+         Write-Host "This module can not be run on a Home version of Windows."
+    } else {
 $Total = 0
 $Active = 0
 $Disc = 0
@@ -62,3 +68,6 @@ If ($Disc -gt 0) {
         }
     }
 }
+
+         
+    }
