@@ -36,8 +36,8 @@ $Values = @{}
         $Values.Jitter.Add("Warn",20)
         $Values.Jitter.Add("Fail",25)
     $Values.Download = @{}
-        $Values.Download.Add("Warn",50)
-        $Values.Download.Add("Fail",25)
+        $Values.Download.Add("Warn",25)
+        $Values.Download.Add("Fail",10)
     $Values.Upload = @{}
         $Values.Upload.Add("Warn",10)
         $Values.Upload.Add("Fail",5)
@@ -52,7 +52,7 @@ If ($Results.'Server Name' -match "Comcast") {
     $Values.Latency.Warn = 10
     $Values.Latency.Fail = 15
 } elseif ($Results.'Server Name' -match "Verizon") {
-    $Values.Latency.Warn = 8
+    $Values.Latency.Warn = 10
     $Values.Latency.Fail = 15
 }
 
