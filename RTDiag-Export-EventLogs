@@ -1,14 +1,16 @@
-# Exports all event logs to an Output Directory
-
+$ProgressPreference = 'SilentlyContinue'
 $n = 0
-$OutputDir = 'C:\RTSupport\Logs\EventLogs'
-If (!(Test-Path $OutputDir)) {new-item $OutputDir -ItemType Directory -force}
+$Date = get-date -Format yyyyMMddhhmmss
+$OutDir = 'C:\RTSupport\Logs\EventLogs'
+If (!(Test-Path "$($OutDir)\$($Date)")) {new-item "$($OutDir)\$($Date)" -ItemType Directory -force}
 
-$GetEventLog = Get-EventLog -List
-    foreach ($log in $GetEventLog) {
+$GetEvtLog = Get-EventLog -List
+    foreach ($log in $GetEvtLog) {
         $n++
-        write-host "Exporting the $($log.Log) Log $($n) of $($GetEventLog.count)"
-        $OutputPath = $OutputDir+'\'+(get-date -Format yyyyMMddhhmmss)+'_'+$ENV:ComputerName+'_'+$log.log+'_EventLog.evtx'
+        write-host "Exporting the $($log.Log) Log $($n) of $($GetEvtLog.count)"
+        $OutPath = $OutDir+'\'+$Date+'\'+$log.log+'_'+$ENV:ComputerName+'_EventLog.evtx'
         $logfile = Get-CimInstance Win32_NTEventlogFile | Where-Object LogfileName -EQ "$($log.log)"
-        Invoke-CimMethod -InputObject $logfile -MethodName BackupEventLog -Arguments @{ ArchiveFileName = $OutputPath }
+        Invoke-CimMethod -InputObject $logfile -MethodName BackupEventLog -Arguments @{ ArchiveFileName = $OutPath }
     }
+Compress-Archive -Path "$($OutDir)\$($Date)" -DestinationPath "$($OutDir)\$($Date)_$($ENV:COMPUTERNAME)_EventLogs.zip"
+Remove-Item "$($OutDir)\$($Date)" -Recurse -force
