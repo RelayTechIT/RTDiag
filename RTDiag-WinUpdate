@@ -54,7 +54,7 @@ While (!$GetWin) {
                 Write-Host "Windows Update Module is not installed. Installing it now." -ForegroundColor Yellow
                     If ((Get-ExecutionPolicy) -ne "RemoteSigned") {
                         Write-Host "Setting ExecutionPolicy to RemoteSigned" -foreground yellow
-                        Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Force; 
+#                        Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Force; 
                     } else {
                         Write-Host "ExecutionPolicy already set to RemoteSigned" -foreground green
                     };
