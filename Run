@@ -62,6 +62,7 @@ if (!($IsAdmin)) {
 
 # Check Execution Policy
     If (Get-ExecutionPolicy -Scope Process -neq "Bypass") {
+        Write-Verbose 'Setting Execution Policy to "Bypass" in scope "process"'
         Set-ExecutionPolicy Bypass -Scope Process -Force
     }
 
