@@ -1,0 +1,127 @@
+# Variables
+    $Dirs = "$($env:ProgramFiles)","$(${env:ProgramFiles(x86)})"
+    $Date   =   get-date -Format yyyyMMddhhmmss
+
+
+function _ExportBrowser {
+    param(
+        [Parameter(Mandatory=$true)][string]$AppName,
+        [Parameter(Mandatory=$false)][string]$RoboThreads="32"
+    )
+    
+    if ($AppName -eq "Chrome") {
+        $AppPub = "Google"
+        $AppExe = "chrome.exe"
+    } elseif ($AppName -eq "Edge") {
+        $AppPub = "Microsoft"
+        $AppExe = "msedge.exe"
+    } else {
+        Write-Host "Only Chrome or Edge are supported at this time."
+        Return
+    }
+    
+    # Set the Export Directory:
+        $ExportDir = "$($Selection):\RTSupport\Utilities\RTProfileMigration\$($CompanyName)\$($Env:UserDomain)_$($Env:USERNAME)\$($Date)\$($AppPub)\$($AppName)"
+
+    $Question = read-host -Prompt "Export $($AppPub) $($AppName)? (Type YES or NO)"
+        if ($Question -eq "YES") {
+            if (!(test-path $ExportDir)) {new-item $ExportDir -ItemType Directory -Force}
+                $Output = @()
+                $DataSize = (gdu -nps "$($ENV:LOCALAPPDATA)\$($AppPub)\$($AppName)").replace("$($AppName)","").trim()
+                $Output += "Application Published \ Name:  $($AppPub) \ $($AppName)"
+                $Output += "Data Location:  $($ENV:LOCALAPPDATA)\$($AppPub)\$($AppName)"
+                $Output += "Export Location:  $($Dir)"
+                $Output += "Data Size: $($DataSize)"  
+                $Output += " "
+                $Output += "You will need to manually export any user passwords. $($AppName) will launch in a moment, export all passwords to $Dir"
+                $Output | foreach {Write-Host "$($_)"}
+                    pause
+    
+                Start-Process -FilePath ($Dirs | foreach {gci -path $_ -Filter "$AppExe" -Recurse -ea SilentlyContinue})[0].FullName
+
+            $Export = read-host -Prompt "Once finished exporting any $($AppName) passwords from the browser type DONE to continue."
+                if ($Export -eq "DONE") {
+                    Write-Host "Closing any open $($AppPub) $($AppName) windows"
+                    get-process -Name *$AppName* | Stop-Process
+#                    & robocopy /E "$($ENV:LOCALAPPDATA)\$($AppPub)\$($AppName)" "$($ExportDir)" /mt:$RoboThreads
+                    $proc = start-process robocopy -ArgumentList "/E $($ENV:LOCALAPPDATA)\$($AppPub)\$($AppName) $($ExportDir) /mt:$RoboThreads" -Wait -NoNewWindow -PassThru
+                    $time = $proc.ExitTime - $proc.StartTime | select Days, Hours, Minutes, Seconds, Milliseconds
+                    Write-Host "File copy finished in : $($time.Days) Days, $($time.Hours) Hours $($time.Minutes) Minutes $($time.Milliseconds) Milliseconds"
+                    & reg export "HKCU\Software\$($AppPub)\$($AppName)\PreferenceMACs" "$($ExportDir)\$($AppName).reg"
+                } else {
+                    Return
+                }
+        } else {
+            Return
+        }  
+}
+
+function _ExportFiles {
+    param(
+    )
+    
+
+    # Set the Export Directory:
+        $ExportDir = "$($Selection):\RTSupport\Utilities\RTProfileMigration\$($CompanyName)\$($Env:UserDomain)_$($Env:USERNAME)\$($Date)\Files"
+
+    # USER FOLDERS EXPORT
+        $Folders = "Contacts","Documents","Downloads","Favorites","Links","Music","Pictures","Saved Games","Videos"
+
+    $Question = read-host -Prompt "Export User Files? (Type YES or NO)"
+        if ($Question -eq "YES") {
+            if (!(test-path $ExportDir)) {new-item $ExportDir -ItemType Directory -Force}
+            
+        $Folders | foreach {
+            $proc = start-process robocopy -ArgumentList "/E $($Env:UserProfile)\$($_) $($ExportDir)\$($_) /mt:$RoboThreads" -Wait -NoNewWindow -PassThru
+            $FCTime += $proc.ExitTime - $proc.StartTime
+        }
+        Write-Host "File copy finished in : $($FCTime.Days) Days, $($FCTime.Hours) Hours $($FCTime.Minutes) Minutes $($FCTime.Milliseconds) Milliseconds"        
+        } else {
+            Return
+        }  
+}
+
+# Get all connected USB Drives
+    $USBS = Get-Volume | where {$_.OperationalStatus -eq "OK"} | where {$_.DriveType -eq "Removable"} | select DriveLetter
+
+# If no drives detected exit, else have user select driveletter to use.
+if ($USBS.DriveLetter.count -lt 1) {
+  Write-Host "It does not look like any USB drives are connected. Connect a USB drive and try again."
+} else {
+  Write-Host "$($USBS.DriveLetter.count) USB devices were detected:"
+  $USBS | foreach {
+    $u = Get-Volume -DriveLetter $_.DriveLetter | select FileSystemLabel, SizeRemaining
+    Write-Host "USB Drive $($_.DriveLetter) with label $($u.FileSystemLabel) has $($u.SizeRemaining) capacity remaining for backup"
+  }
+  Write-Host ""
+  $Selection = read-host -Prompt "Which USB Drive would you like to backup your profile to?"
+}
+
+If (!($CompanyName)) {$CompanyName = read-host -prompt 'Enter value for Customer (Company) Name'}
+$CompanyName = $CompanyName -replace "[^a-zA-Z_]",''
+
+
+    While (1) {
+        Write-Host "Relay Tech Profile Migration Utility"
+        Write-Host ""
+        Write-Host "Select an option to continue:"
+        Write-Host "    1 - Export Google Chrome"
+        Write-Host "    2 - Export Microsoft Edge"
+        Write-Host "    3 - Export Local User Files"
+        Write-Host ""
+        Write-Host "   99  -   End Script"
+        Write-Host ""
+        $Choice = Read-Host
+
+        if ($Choice -eq 99) {
+            Write-Host "Exiting Menu." -foregroundcolor yellow; Break;
+        } elseif ($Choice -eq 1) {
+            _ExportBrowser -AppName "Chrome"
+        } elseif ($Choice -eq 2) {
+            _ExportBrowser -AppName "Edge"
+        } elseif ($Choice -eq 3) {
+            _ExportFiles
+        } else {
+            Write-Host "Incorrect Selection. Pick again." -foregroundcolor yellow
+        }
+    }
