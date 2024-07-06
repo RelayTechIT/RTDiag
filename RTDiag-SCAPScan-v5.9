@@ -33,6 +33,11 @@ write-host "Check if cscc.exe is already present and skip downloading if it is"
 write-host "locate cscc.exe and run it (This will take some minutes)"
     $cscc = gci -path $lclfldr -recurse cscc.exe
     start-process -FilePath $cscc.fullname -ArgumentList "-ea --checkForContentUpdates --installAll" -Wait -NoNewWindow
+    # start-process -FilePath $cscc.fullname -ArgumentList "--SetProfileAll MAC-1_Classified" -Wait -NoNewWindow
+    # start-process -FilePath $cscc.fullname -ArgumentList "--SetProfileAll CAT_I_Only" -Wait -NoNewWindow
+    start-process -FilePath $cscc.fullname -ArgumentList "--SetProfileAll MAC-3_Public" -Wait -NoNewWindow
+    
+
     start-process -FilePath $cscc.fullname -ArgumentList "-ear -u $lclfldr" -Wait -NoNewWindow
 
 write-host "Zipping Results for easy extraction"
