@@ -1,0 +1,69 @@
+Write-Host "Local User Account Checks:"
+
+$NetLocalAdmins = net localgroup administrators
+$EnabledLocalUsers = get-localuser | where {$_.enabled}
+
+$PasswordRequired = 0
+$LocalAdmins = 0
+
+$EnabledLocalUsers | foreach {
+    if ($_.PasswordRequired) {$PasswordRequired++}
+    if ($NetLocalAdmins -match $_.name) {$LocalAdmins++}
+}
+
+Write-Host "Enabled Accounts:       $($EnabledLocalUsers.count)"
+if ($PasswordRequired -gt 0) {
+    Write-Host "Password not required:  $($PasswordRequired)" -foregroundcolor yellow
+} else {
+    Write-Host "Password not required:  $($PasswordRequired)" -foregroundcolor green
+}
+
+if ($LocalAdmins -gt 1) {
+    Write-Host "Local Administrators:   $($LocalAdmins)" -foregroundcolor yellow
+    $Score += ($LocalAdmins - 1) * -5
+} else {
+    Write-Host "Local Administrators:   $($LocalAdmins)" -foregroundcolor green
+}
+
+
+# Administrator Account
+if ((get-localuser | where {$_.SID -eq 'S-1-5-21-2118965201-3431540597-3266873878-500'}).Enabled) {
+    $AdminAccountStatus = "ENABLED"
+    $Score += 10
+} else {
+    $AdminAccountStatus = "DISABLED"
+    $Score += -10
+}
+
+# Guest Account
+if ((get-localuser | where {$_.SID -eq 'S-1-5-21-2118965201-3431540597-3266873878-501'}).Enabled) {
+    $GuestAccountStatus = "ENABLED"
+} else {
+    $GuestAccountStatus = "DISABLED"
+}
+
+write-host ""
+write-host "Local System Checks"
+
+# Check User Account Control
+if ((Get-ItemProperty HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System).EnableLUA -eq 0) {
+    Write-Host "User Account Control:   DISABLED" -ForegroundColor yellow
+} else {
+    Write-Host "User Account Control:   ENABLED" -ForegroundColor green
+}
+
+get-SmbShare | foreach {
+    $BADSMBShares += Get-SmbShareAccess $_.name | `
+            where {$_.AccountName -ne "BUILTIN\Administrators"} | `
+                where {$_.AccountName -ne "BUILTIN\Backup Operators"} | `
+                    where {$_.AccountName -ne "NT AUTHORITY\INTERACTIVE"}
+}
+
+if ($BADSMBShares -eq 0) {
+    Write-Host "BAD SMB Shares Found:   $($BADSMBShares.Count)" -ForegroundColor green
+} else {
+    Write-Host "BAD SMB Shares Found:   $($BADSMBShares.Count)" -ForegroundColor yellow
+    $BADSMBShares | foreach {
+        Write-Host "    Name: $($_.name) AccountName: $($_.AccountName) AccessControlType: $($_.AccessControlType) AccessRight: $($_.AccessRight)" -foregroundcolor yellow
+    }
+}
