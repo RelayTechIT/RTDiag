@@ -59,7 +59,7 @@ get-SmbShare | foreach {
                     where {$_.AccountName -ne "NT AUTHORITY\INTERACTIVE"}
 }
 
-if ($BADSMBShares -eq 0) {
+if ($BADSMBShares.count -eq 0) {
     Write-Host "BAD SMB Shares Found:   $($BADSMBShares.Count)" -ForegroundColor green
 } else {
     Write-Host "BAD SMB Shares Found:   $($BADSMBShares.Count)" -ForegroundColor yellow
@@ -67,3 +67,4 @@ if ($BADSMBShares -eq 0) {
         Write-Host "    Name: $($_.name) AccountName: $($_.AccountName) AccessControlType: $($_.AccessControlType) AccessRight: $($_.AccessRight)" -foregroundcolor yellow
     }
 }
+
