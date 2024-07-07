@@ -11,6 +11,49 @@ $ZipFiles = @()
 $ZipFiles += 'scc-'+$Version+'_Windows_bundle.zip'
 $ZipFiles += 'scc-'+$Version+'_Windows.zip'
 
+$ScapMenu   =   @(
+        [PSCustomObject]@{DisplayName = 'CAT_I_Only'}
+        [PSCustomObject]@{DisplayName = 'MAC-1_Classified'}
+        [PSCustomObject]@{DisplayName = 'MAC-1_Public'}
+        [PSCustomObject]@{DisplayName = 'MAC-1_Sensitive'}
+        [PSCustomObject]@{DisplayName = 'MAC-2_Classified'}
+        [PSCustomObject]@{DisplayName = 'MAC-2_Public'}
+        [PSCustomObject]@{DisplayName = 'MAC-2_Sensitive'}
+        [PSCustomObject]@{DisplayName = 'MAC-3_Classified'}
+        [PSCustomObject]@{DisplayName = 'MAC-3_Public'}
+        [PSCustomObject]@{DisplayName = 'MAC-3_Sensitive'}
+        
+    )
+
+    $n = 1
+    $Menu   =   @(
+    $ScapMenu | foreach {
+        [PSCustomObject]@{Prompt = $n; DisplayName = $_.DisplayName}
+        $n++
+    }
+    )
+
+    While (1) {
+        Write-Host "Select from one of the following SCAP scan profiles:"
+    
+        $Menu | foreach {
+            Write-Host  "   " $_.Prompt "  -   " $_.DisplayName
+        }
+        Write-Host ""
+        Write-Host "   99  -   Return to main menu"
+        Write-Host ""
+        $c = Read-Host
+    
+        If ($c -eq 99) {
+            Write-Host "Exiting Menu." -foregroundcolor yellow; Break;
+        } elseif ($menu | where Prompt -eq $c) {    
+            $SCAPProfile = ($menu | where Prompt -eq $c).DisplayName; Break;
+        } else {
+            Write-Host "Incorrect Selection. Pick again." -foregroundcolor yellow
+        }
+    }
+
+
 Write-Host Create $lclfldr if it isnt there
     If (!(Test-Path $lclfldr)) {new-item $lclfldr -ItemType Directory}
 
@@ -35,7 +78,9 @@ write-host "locate cscc.exe and run it (This will take some minutes)"
     start-process -FilePath $cscc.fullname -ArgumentList "-ea --checkForContentUpdates --installAll" -Wait -NoNewWindow
     # start-process -FilePath $cscc.fullname -ArgumentList "--SetProfileAll MAC-1_Classified" -Wait -NoNewWindow
     # start-process -FilePath $cscc.fullname -ArgumentList "--SetProfileAll CAT_I_Only" -Wait -NoNewWindow
-    start-process -FilePath $cscc.fullname -ArgumentList "--SetProfileAll MAC-3_Public" -Wait -NoNewWindow
+    # start-process -FilePath $cscc.fullname -ArgumentList "--SetProfileAll MAC-3_Public" -Wait -NoNewWindow
+    start-process -FilePath $cscc.fullname -ArgumentList "--SetProfileAll $($SCAPProfile)" -Wait -NoNewWindow
+    
     
 
     start-process -FilePath $cscc.fullname -ArgumentList "-ear -u $lclfldr" -Wait -NoNewWindow
