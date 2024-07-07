@@ -109,3 +109,20 @@ Write-Host "Results from this scan are located at" $export`.zip
             }      
             Write-Host "Removing:" $Export
                 remove-item $Export -Recurse -Force -ea silentlycontinue
+
+Write-host "Simplified Results:"
+gci "$($Session.FullName)\Results\SCAP" -Filter "*All-Settings*.html" | foreach {
+#    $Strings = "Stream:", "Pass:", "Fail:", "Not Applicable:", "Not Checked:", "Error:", "Not Selected:", "Unknown:", "Informational:","Fixed:","Total:","Adjusted Score:", "Original Score:"
+    $Strings = "Stream:", "Pass:", "Fail:", "Original Score:"
+    $html = Invoke-RestMethod $_.FullName
+        $Strings | foreach {
+        $reg_exp = $_ +'</td>'
+        $all_matches = ($html | Select-String $reg_exp -AllMatches).Matches
+        $Value = $html.Substring($all_matches.index,100).split('><')[4]
+#        Write-Host "$($_)  $($Value)"
+        $Output += "$($_) $($Value) "
+    }
+#    Write-Host ""
+    Write-host "$($Output)"
+    remove-variable output
+}
