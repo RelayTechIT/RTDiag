@@ -43,7 +43,10 @@ param (
     $GciInf.Name
     $GciInf.DirectoryName
 
-    start-process robocopy -ArgumentList "$($GciInf.DirectoryName) $($DirLocal)\$($GciInf.Name) /E" -Wait -NoNewWindow -PassThru
+        $Args = "$($GciInf.DirectoryName) $($DirLocal)\$($GciInf.Name) /E"
+        Write-Host "Running robocopy with arguments $($Args)"
+        pause
+        start-process robocopy -ArgumentList $Args -Wait -NoNewWindow -PassThru
 
     Stop-Transcript
 
