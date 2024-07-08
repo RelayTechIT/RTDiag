@@ -88,9 +88,21 @@ if ($SCAPRUN -eq 1) {
 
     write-host "locate cscc.exe and run it (This will take some minutes)"
         $cscc = gci -path $lclfldr -recurse cscc.exe
-        start-process -FilePath $cscc.fullname -ArgumentList "-ea --checkForContentUpdates --installAll" -Wait -NoNewWindow
-        start-process -FilePath $cscc.fullname -ArgumentList "--SetProfileAll $($SCAPProfile)" -Wait -NoNewWindow
-        start-process -FilePath $cscc.fullname -ArgumentList "-ear -u $lclfldr" -Wait -NoNewWindow
+
+        $Args = "-ea --checkForContentUpdates --installAll"
+            If ($RunSilent) {$Args += " --quiet"}
+        Write-host "Running $($cscc.fullname) -ArgumentList $($Args)"
+        start-process -FilePath $cscc.fullname -ArgumentList $Args -Wait -NoNewWindow
+
+        $Args = "--SetProfileAll $($SCAPProfile)"
+            If ($RunSilent) {$Args += " --quiet"}
+        Write-host "Running $($cscc.fullname) -ArgumentList $($Args)"
+        start-process -FilePath $cscc.fullname -ArgumentList $Args -Wait -NoNewWindow
+
+        $Args = "-ear -u $($lclfldr)"
+            If ($RunSilent) {$Args += " --quiet"}
+        Write-host "Running $($cscc.fullname) -ArgumentList $($Args)"
+        start-process -FilePath $cscc.fullname -ArgumentList $Args -Wait -NoNewWindow
 
     write-host "Zipping Results for easy extraction"
             $session=gci $lclfldr\sessions | ? { $_.PSIsContainer } | sort CreationTime -desc | select -f 1
