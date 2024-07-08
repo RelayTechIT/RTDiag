@@ -19,12 +19,14 @@ param (
     $Prn = Get-Printer "*$($PrintDeviceCommonName)*"
     if ($Prn.Name.Count -lt 1) {
         Write-Host "Error locating printer with name $($PrintDeviceCommonName)"
+        Return
     } elseif ($Prn.Name.Count -gt 1) {
         Write-Host "More than one printer found matching string. Narrow search and try again."
         Write-Host "Printer Search String:  $($PrintDeviceCommonName)"
         Write-Host ""
-        Write-Host "Results:"
-        $prn | foreach {Write-Host "$($_)"}
+#        Write-Host "Results:"
+#        $prn | foreach {Write-Host "$($_)"}
+        Return
     } elseif ($Prn.Name.Count -eq 1) {
         $PrnDriver = Get-PrinterDriver -name $Prn.DriverName
         $PrnPort = Get-PrinterPort -name $Prn.PortName
@@ -45,7 +47,6 @@ param (
 
         $Args = "$($GciInf.DirectoryName) $($DirLocal)\$($GciInf.Name) /E"
         Write-Host "Running robocopy with arguments $($Args)"
-        pause
         start-process robocopy -ArgumentList $Args -Wait -NoNewWindow -PassThru
 
     Stop-Transcript
@@ -69,7 +70,8 @@ switch ($PrinterName)
         break;
     }
     default {
-        read-host -prompt "Please enter a printer name to export:" | _export-PrintConfiguration -PrintDeviceCommonName $_
+        $prompt = read-host -prompt "Please enter a printer name to export"
+        _export-PrintConfiguration -PrintDeviceCommonName $prompt
         break;
     }
 }
