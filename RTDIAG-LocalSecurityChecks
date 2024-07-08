@@ -45,6 +45,13 @@ if ((get-localuser | where {$_.SID -eq 'S-1-5-21-2118965201-3431540597-326687387
 write-host ""
 write-host "Local System Checks"
 
+# Check User Account Control
+if ((Get-ItemProperty HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System).EnableLUA -eq 0) {
+    Write-Host "User Account Control:   DISABLED" -ForegroundColor yellow
+} else {
+    Write-Host "User Account Control:   ENABLED" -ForegroundColor green
+}
+
 # Bitlocker Status
 
 Write-Host "Bitlocker Drive Status:"
@@ -57,11 +64,63 @@ if ($_.ProtectionStatus -ne "On") {
 }
 }
 
-# Check User Account Control
-if ((Get-ItemProperty HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System).EnableLUA -eq 0) {
-    Write-Host "User Account Control:   DISABLED" -ForegroundColor yellow
-} else {
-    Write-Host "User Account Control:   ENABLED" -ForegroundColor green
+Write-Host "Windows Defender Status:"
+Get-MpComputerStatus -ea silentlycontinue | foreach { 
+    $Output = "    AntispywareEnabled: $($_.AntispywareEnabled)     AntispywareSignatureAge: $($_.AntispywareSignatureAge)"
+        if ($_.AntispywareEnabled) {
+            Write-Host $Output -foregroundcolor green
+        } else {
+            Write-Host $Output -foregroundcolor yellow
+        }
+    
+    $Output = "    AntivirusEnabled: $($_.AntivirusEnabled)     AntivirusSignatureAge: $($_.AntivirusSignatureAge)"
+        if ($_.AntivirusEnabled) {
+            Write-Host $Output -foregroundcolor green
+        } else {
+            Write-Host $Output -foregroundcolor yellow
+        }
+    
+    $Output = "    BehaviorMonitorEnabled: $($_.BehaviorMonitorEnabled)     ComputerState: $($_.ComputerState)"
+        if ($_.BehaviorMonitorEnabled) {
+            Write-Host $Output -foregroundcolor green
+        } else {
+            Write-Host $Output -foregroundcolor yellow
+        }
+
+    $Output = "    IoavProtectionEnabled: $($_.IoavProtectionEnabled)   IsTamperProtected: $($_.IsTamperProtected)"
+        if ($_.IoavProtectionEnabled) {
+            Write-Host $Output -foregroundcolor green
+        } else {
+            Write-Host $Output -foregroundcolor yellow
+        }
+
+    $Output = "    NISEnabled: $($_.NISEnabled)     NISSignatureAge: $($_.NISSignatureAge)"
+        if ($_.NISEnabled) {
+            Write-Host $Output -foregroundcolor green
+        } else {
+            Write-Host $Output -foregroundcolor yellow
+        }
+
+    $Output = "    OnAccessProtectionEnabled: $($_.OnAccessProtectionEnabled)   DefenderSignaturesOutOfDate: $($_.DefenderSignaturesOutOfDate)"
+        if ($_.OnAccessProtectionEnabled) {
+            Write-Host $Output -foregroundcolor green
+        } else {
+            Write-Host $Output -foregroundcolor yellow
+        }
+
+    $Output = "    QuickScanAge: $($_.QuickScanAge)     QuickScanOverdue: $($_.QuickScanOverdue)"
+        if ($_.QuickScanOverdue) {
+            Write-Host $Output -foregroundcolor yellow
+        } else {
+            Write-Host $Output -foregroundcolor green
+        }
+
+    $Output = "    RealTimeProtectionEnabled: $($_.RealTimeProtectionEnabled)   RealTimeScanDirection: $($_.RealTimeScanDirection)"
+        if ($_.RealTimeProtectionEnabled) {
+            Write-Host $Output -foregroundcolor green
+        } else {
+            Write-Host $Output -foregroundcolor yellow
+        }
 }
 
 get-SmbShare | foreach {
