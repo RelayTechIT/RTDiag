@@ -1,3 +1,4 @@
+
 $ProgressPreference = 'SilentlyContinue' 
 $ErrorActionPreference = "Continue"
 
@@ -10,6 +11,14 @@ $URI = 'https://dl.dod.cyber.mil/wp-content/uploads/stigs/zip/scc-'+$Version+'_W
 $ZipFiles = @()
 $ZipFiles += 'scc-'+$Version+'_Windows_bundle.zip'
 $ZipFiles += 'scc-'+$Version+'_Windows.zip'
+
+$SCAPProfileOptions = "CAT_I_Only" , "MAC-1_Classified" , "MAC-1_Public" , "MAC-1_Sensitive" , "MAC-2_Classified" , "MAC-2_Public" , "MAC-2_Sensitive" , "MAC-3_Classified" , "MAC-3_Public" , "MAC-3_Sensitive"
+
+$SCAPProfileOptions | foreach {
+    if ($SCAPProfile -eq $_) {$SCAPRUN = 1}
+}
+
+if ($SCAPRUN -ne 1) {
 
 $ScapMenu   =   @(
         [PSCustomObject]@{DisplayName = 'CAT_I_Only'}
@@ -47,82 +56,84 @@ $ScapMenu   =   @(
         If ($c -eq 99) {
             Write-Host "Exiting Menu." -foregroundcolor yellow; Break;
         } elseif ($menu | where Prompt -eq $c) {    
+            $SCAPRUN = 1
             $SCAPProfile = ($menu | where Prompt -eq $c).DisplayName; Break;
+
         } else {
             Write-Host "Incorrect Selection. Pick again." -foregroundcolor yellow
         }
     }
+}
 
+if ($SCAPRUN -eq 1) {
 
-Write-Host Create $lclfldr if it isnt there
-    If (!(Test-Path $lclfldr)) {new-item $lclfldr -ItemType Directory}
+    Write-Host Create $lclfldr if it isnt there
+        If (!(Test-Path $lclfldr)) {new-item $lclfldr -ItemType Directory}
 
-Write-Host If the cscc process is running, stop it
-    get-process cscc -ErrorAction SilentlyContinue | stop-process
+    Write-Host If the cscc process is running, stop it
+        get-process cscc -ErrorAction SilentlyContinue | stop-process
 
-write-host "Check if cscc.exe is already present and skip downloading if it is"
-    $cscc = gci -path $lclfldr -recurse cscc.exe
-        If (!($cscc)) {
-            Write-Host Download the .zip file to $lclfldr\scc-$Version`_Windows_bundle.zip
-                iwr -Uri $URI -OutFile $lclfldr\scc-$Version`_Windows_bundle.zip
-        
-            $ZipFiles | foreach {
-                Write-Host "Locate the file:" $_ "and extract it to:" $lclfldr
-                $gci = (gci -Path $lclfldr -recurse $_)
-                expand-archive $gci.FullName $gci.DirectoryName -Force
-            }      
+    write-host "Check if cscc.exe is already present and skip downloading if it is"
+        $cscc = gci -path $lclfldr -recurse cscc.exe
+            If (!($cscc)) {
+                Write-Host Download the .zip file to $lclfldr\scc-$Version`_Windows_bundle.zip
+                    iwr -Uri $URI -OutFile $lclfldr\scc-$Version`_Windows_bundle.zip
+            
+                $ZipFiles | foreach {
+                    Write-Host "Locate the file:" $_ "and extract it to:" $lclfldr
+                    $gci = (gci -Path $lclfldr -recurse $_)
+                    expand-archive $gci.FullName $gci.DirectoryName -Force
+                }      
+            }
+
+    write-host "locate cscc.exe and run it (This will take some minutes)"
+        $cscc = gci -path $lclfldr -recurse cscc.exe
+        start-process -FilePath $cscc.fullname -ArgumentList "-ea --checkForContentUpdates --installAll" -Wait -NoNewWindow
+        start-process -FilePath $cscc.fullname -ArgumentList "--SetProfileAll $($SCAPProfile)" -Wait -NoNewWindow
+        start-process -FilePath $cscc.fullname -ArgumentList "-ear -u $lclfldr" -Wait -NoNewWindow
+
+    write-host "Zipping Results for easy extraction"
+            $session=gci $lclfldr\sessions | ? { $_.PSIsContainer } | sort CreationTime -desc | select -f 1
+            $Export =	$lclfldr+'\_Archive\'+$Session.name+'_'+$env:COMPUTERNAME
+            New-Item $Export -itemtype Directory
+
+            $Src	= $session.fullname
+            $Dst	= $Export
+                robocopy $Src $Dst
+
+            $Src	= $session.fullname+'\Results\SCAP'
+            $Dst	= $Export+'\Results\SCAP'
+                robocopy $Src $Dst
+
+            Compress-Archive $export $export`.zip -force
+            
+
+    Write-Host "Results from this scan are located at" $export`.zip
+
+    #Cleanup
+            Write-Host "Cleaning up installation files:"
+                $ZipFiles | foreach {
+                    Write-Host "Locate the file:" $_ "and remove it."
+                    remove-item (gci -Path $lclfldr -recurse $_).FullName -recurse -force -ea silentlycontinue
+                }      
+                Write-Host "Removing:" $Export
+                    remove-item $Export -Recurse -Force -ea silentlycontinue
+
+    Write-host "Simplified Results:"
+    gci "$($Session.FullName)\Results\SCAP" -Filter "*All-Settings*.html" | foreach {
+    #    $Strings = "Stream:", "Pass:", "Fail:", "Not Applicable:", "Not Checked:", "Error:", "Not Selected:", "Unknown:", "Informational:","Fixed:","Total:","Adjusted Score:", "Original Score:"
+        $Strings = "Stream:", "Pass:", "Fail:", "Original Score:"
+        $html = Invoke-RestMethod $_.FullName
+            $Strings | foreach {
+            $reg_exp = $_ +'</td>'
+            $all_matches = ($html | Select-String $reg_exp -AllMatches).Matches
+            $Value = $html.Substring($all_matches.index,100).split('><')[4]
+    #        Write-Host "$($_)  $($Value)"
+            $Output += "$($_) $($Value) "
         }
+    #    Write-Host ""
+        Write-host "$($Output)"
+        remove-variable output
+}
 
-write-host "locate cscc.exe and run it (This will take some minutes)"
-    $cscc = gci -path $lclfldr -recurse cscc.exe
-    start-process -FilePath $cscc.fullname -ArgumentList "-ea --checkForContentUpdates --installAll" -Wait -NoNewWindow
-    # start-process -FilePath $cscc.fullname -ArgumentList "--SetProfileAll MAC-1_Classified" -Wait -NoNewWindow
-    # start-process -FilePath $cscc.fullname -ArgumentList "--SetProfileAll CAT_I_Only" -Wait -NoNewWindow
-    # start-process -FilePath $cscc.fullname -ArgumentList "--SetProfileAll MAC-3_Public" -Wait -NoNewWindow
-    start-process -FilePath $cscc.fullname -ArgumentList "--SetProfileAll $($SCAPProfile)" -Wait -NoNewWindow
-    
-    start-process -FilePath $cscc.fullname -ArgumentList "-ear -u $lclfldr" -Wait -NoNewWindow
-
-write-host "Zipping Results for easy extraction"
-        $session=gci $lclfldr\sessions | ? { $_.PSIsContainer } | sort CreationTime -desc | select -f 1
-        $Export =	$lclfldr+'\_Archive\'+$Session.name+'_'+$env:COMPUTERNAME
-        New-Item $Export -itemtype Directory
-
-        $Src	= $session.fullname
-        $Dst	= $Export
-            robocopy $Src $Dst
-
-        $Src	= $session.fullname+'\Results\SCAP'
-        $Dst	= $Export+'\Results\SCAP'
-            robocopy $Src $Dst
-
-        Compress-Archive $export $export`.zip -force
-        
-
-Write-Host "Results from this scan are located at" $export`.zip
-
-#Cleanup
-        Write-Host "Cleaning up installation files:"
-            $ZipFiles | foreach {
-                Write-Host "Locate the file:" $_ "and remove it."
-                remove-item (gci -Path $lclfldr -recurse $_).FullName -recurse -force -ea silentlycontinue
-            }      
-            Write-Host "Removing:" $Export
-                remove-item $Export -Recurse -Force -ea silentlycontinue
-
-Write-host "Simplified Results:"
-gci "$($Session.FullName)\Results\SCAP" -Filter "*All-Settings*.html" | foreach {
-#    $Strings = "Stream:", "Pass:", "Fail:", "Not Applicable:", "Not Checked:", "Error:", "Not Selected:", "Unknown:", "Informational:","Fixed:","Total:","Adjusted Score:", "Original Score:"
-    $Strings = "Stream:", "Pass:", "Fail:", "Original Score:"
-    $html = Invoke-RestMethod $_.FullName
-        $Strings | foreach {
-        $reg_exp = $_ +'</td>'
-        $all_matches = ($html | Select-String $reg_exp -AllMatches).Matches
-        $Value = $html.Substring($all_matches.index,100).split('><')[4]
-#        Write-Host "$($_)  $($Value)"
-        $Output += "$($_) $($Value) "
-    }
-#    Write-Host ""
-    Write-host "$($Output)"
-    remove-variable output
 }
