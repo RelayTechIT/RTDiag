@@ -45,6 +45,18 @@ if ((get-localuser | where {$_.SID -eq 'S-1-5-21-2118965201-3431540597-326687387
 write-host ""
 write-host "Local System Checks"
 
+# Bitlocker Status
+
+Write-Host "Bitlocker Drive Status:"
+Get-BitLockerVolume | sort -Property "MountPoint" | foreach {
+    $Output = "    Volume: $($_.MountPoint.replace(':',''))    Protection Status: $($_.ProtectionStatus) Volume Status: $($_.VolumeStatus)"
+if ($_.ProtectionStatus -ne "On") {
+    Write-Host $Output -foregroundcolor yellow
+} else {
+    Write-Host $Output -foregroundcolor green
+}
+}
+
 # Check User Account Control
 if ((Get-ItemProperty HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System).EnableLUA -eq 0) {
     Write-Host "User Account Control:   DISABLED" -ForegroundColor yellow
