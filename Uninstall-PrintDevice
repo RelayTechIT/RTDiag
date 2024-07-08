@@ -1,0 +1,87 @@
+$ErrorActionPreference = "stop"
+$ProgressPreference = "silentlycontinue"
+
+function _Uninstall-PrintDevice {
+param (
+        $PrintDeviceCommonName
+)
+$DateStamp  =   get-date -Format yyyyMMddhhmmss
+    $DirLocal = "C:\RTSupport\Logs\Printers"
+    If (!(test-path $DirLocal)) {new-item $DirLocal -itemtype Directory -force}
+
+    $Log = "$($DirLocal)\$($DateStamp)-$($PrintDeviceCommonName)-Uninstall-PrintDevice.log"
+    Start-Transcript $Log
+    Write-Host ""
+    Write-Host ""
+    Write-Host ""
+
+    $Prn = Get-Printer "*$($PrintDeviceCommonName)*"
+    if ($Prn.Name.Count -lt 1) {
+        Write-Host "Error locating printer with name $($PrintDeviceCommonName)"
+        Return
+    } elseif ($Prn.Name.Count -gt 1) {
+        Write-Host "More than one printer found matching string. Narrow search and try again."
+        Write-Host "Printer Search String:  $($PrintDeviceCommonName)"
+        Write-Host ""
+        Write-Host "Results:"
+        $prn | foreach {Write-Host "$($_)"}
+        Return
+    } elseif ($Prn.Name.Count -eq 1) {
+        $PrnDriver = Get-PrinterDriver -name $Prn.DriverName
+        $PrnPort = Get-PrinterPort -name $Prn.PortName
+        Write-Host "Print Device found:"
+        Write-Host "Name:   $($Prn.Name)"
+        Write-Host "Driver:   $($Prn.DriverName)"
+        Write-Host "Port:   $($Prn.PortName)"
+
+        If ($Prn) {
+        # Remove Printer
+            Try {
+                Get-Printer $Prn.Name -ea silentlycontinue | Remove-Printer
+                Write-Host "Successfully removed Printer $($Prn.Name)" -foregroundcolor green
+            } catch {
+                Write-Host "An error occurred: $($_)" -foregroundcolor Red
+                Return
+            }
+        
+        # Remove Printer Port
+            Try {
+                Get-PrinterPort -Name $Prn.PortName -ea SilentlyContinue | Remove-PrinterPort
+                Write-Host "Successfully removed Printer Port: $($Prn.PortName)" -foregroundcolor green
+            } catch {
+                Write-Host "An error occurred: $($_)" -foregroundcolor Red
+                Return
+            }
+        
+        # Remove Printer Driver
+            Try {
+                Get-PrinterPort -Name $Prn.DriverName -ea SilentlyContinue | Remove-PrinterDriver
+                Write-Host "Successfully removed Printer Driver: $($Prn.DriverName)" -foregroundcolor green
+            } catch {
+                Write-Host "An error occurred: $($_)" -foregroundcolor Red
+                Return
+            }
+    }
+    }
+} # _Uninstall-PrintDevice
+
+switch ($PrinterName)
+{
+    {$PrinterName -eq "ALL"} {
+        get-printer | foreach {_Uninstall-PrintDevice -PrintDeviceCommonName $_.Name}
+        break;
+    }
+    {$PrinterName.count -eq 1} {
+        _Uninstall-PrintDevice -PrintDeviceCommonName $PrinterName
+        break;
+    }
+    {$PrinterName.count -gt 1} {
+        $PrinterName | foreach {_Uninstall-PrintDevice -PrintDeviceCommonName $_}
+        break;
+    }
+    default {
+        $prompt = read-host -prompt "Please enter a printer name to export"
+        _Uninstall-PrintDevice -PrintDeviceCommonName $prompt
+        break;
+    }
+}
