@@ -8,7 +8,7 @@ $Destination = 'U:\Annabelle's Bedroom'
 
 $RoboArgs = "$($Source) $($Destination)"
 if ($Operation -eq "Move") {$RoboArgs += "/MOVE"}
-if ($SubDirectories) {$RoboArgs += " /E"
+if ($SubDirectories) {$RoboArgs += " /E"}
 if ($RoboThreads) {$RoboArgs += /mt:$RoboThreads}
 
 Write-Host "Running Robocopy $($RoboArgs)"
