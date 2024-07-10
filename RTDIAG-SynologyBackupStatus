@@ -1,0 +1,19 @@
+$Color = 'green'
+
+$RegPath = 'HKLM:\SOFTWARE\Synology\ActiveBackupforBusinessCustom\LastBackupStatus'
+    
+    $LastBackupStatus       =   Get-ItemPropertyValue -Path $RegPath -Name 'LastBackupStatus'
+    $LastBackupDuration     =   Get-ItemPropertyValue -Path $RegPath -Name 'LastBackupDuration'
+    $LastBackupEndTime      =   Get-ItemPropertyValue -Path $RegPath -Name 'LastBackupEndTime'
+    $DaysSinceLastBackup    =   (Get-Date -Format "yyyyMMdd") - ((Get-ItemPropertyValue -Path $RegPath -Name 'LastBackupEndTime').split(' ')[0])
+
+    If ($LastBackupStatus -ne 0) {$Color = 'yellow'}
+    If ($DaysSinceLastBackup -gt 7) {$Color = 'yellow'}
+
+$Output = @()
+$Output += "Backup Status for $($ENV:ComputerName)"
+$Output += "    Last Backup Status:             $($LastBackupStatus)"
+$Output += "    Last Backup Duration:           $($LastBackupDuration)"
+$Output += "    Last Backup Date\Time:          $($LastBackupEndTime)"
+$Output += "    Days since last Good Backup:    $($DaysSinceLastBackup)"
+$Output | foreach {Write-Host "$($_)" -foregroundcolor $Color}
