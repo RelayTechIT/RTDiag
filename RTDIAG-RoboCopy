@@ -1,0 +1,19 @@
+# $RoboThreads = 16
+$RoboThreads = ''
+
+$SubDirectories = $True
+$Operation = "Move"
+$Source = 'E:\Annabelle's Bedroom'
+$Destination = 'U:\Annabelle's Bedroom'
+
+$RoboArgs = "$($Source) $($Destination)"
+if ($Operation -eq "Move") {$RoboArgs += "/MOVE"}
+if ($SubDirectories) {$RoboArgs += " /E"
+if ($RoboThreads) {$RoboArgs += /mt:$RoboThreads}
+
+Write-Host "Running Robocopy $($RoboArgs)"
+$p = start-process robocopy -ArgumentList $RoboArgs -wait -nonewwindow -PassThru
+$t = $p.ExitTime - $p.StartTime | select Days, Hours, Minutes, Seconds, Milliseconds
+
+Write-Host "File copy finished in : $($t.Days) Days, $($t.Hours) Hours $($t.Minutes) Minutes $($t.Milliseconds) Milliseconds"
+                
