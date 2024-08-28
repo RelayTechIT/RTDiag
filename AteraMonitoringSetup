@@ -1,0 +1,18 @@
+<# 
+    Setup Monitoring Registry Values
+
+#>
+
+$MonitoringRegPath  =   'HKLM:\SOFTWARE\RelayTech\Monitoring'
+
+if (!(test-path $MonitoringRegPath)) {New-Item $MonitoringRegPath -Force}
+
+if (!((Get-Item $MonitoringRegPath -EA Ignore).Property -contains "LastBackupStatus")) {
+    New-ItemProperty -Path $MonitoringRegPath -Name LastBackupStatus -Value 0    
+}
+
+if (!((Get-Item $MonitoringRegPath -EA Ignore).Property -contains "LastBackupDays")) {
+    New-ItemProperty -Path $MonitoringRegPath -Name LastBackupDays -Value 7    
+}
+
+
