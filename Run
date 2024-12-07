@@ -98,7 +98,7 @@ If ($ErrN -gt 0) {
     
     $PreMenu   =   @(
         [PSCustomObject]@{DisplayName = 'Performace Check'; FunctionName = 'RTDiag-PerfCheck'}
-        [PSCustomObject]@{DisplayName = 'Install Guardz'; FunctionName = 'RTDIAG-Install_Guardz'}
+        [PSCustomObject]@{DisplayName = 'Install Guardz'; FunctionName = 'RTDIAG-InstallGuardz'}
         [PSCustomObject]@{DisplayName = 'Query Users'; FunctionName = 'RTDiag-QueryUsers'}
         [PSCustomObject]@{DisplayName = 'IPv6 Check'; FunctionName = 'RTDiag-IPv6Check'}
         [PSCustomObject]@{DisplayName = 'Test Internet Speed'; FunctionName = 'RTDiag-Test-Bandwidth'}
