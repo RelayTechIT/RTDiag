@@ -1,8 +1,5 @@
 
-if (!$Key) {
-  $Key = Read-Host -Prompt "Enter Key to continue"
-}
-
+$Key = Read-Host -Prompt "Enter Key to continue"
 
 param (
   [Parameter()]
