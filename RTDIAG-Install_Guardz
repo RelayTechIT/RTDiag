@@ -1,0 +1,116 @@
+
+if (!$Key) {
+  $Key = Read-Host -Prompt "Enter Key to continue"
+}
+
+
+param (
+  [Parameter()]
+  [string]$OrganizationKey = "$Key",
+
+  [Parameter()]
+  [string]$Version = ""
+)
+
+$ErrorActionPreference = "Stop"
+
+$VersionQueryParam = ""
+if ($Version.Length -gt 0) {
+  $VersionQueryParam = "?version=$Version"
+}
+
+$InstallerName = "GuardzAgent.msi"
+$ProcessName = "Guardz Agent"
+$InstallerTempPath = Join-Path $Env:TMP $InstallerName
+$DownloadURL = "https://app.us.guardz.com/api/device-agent/download/windows$VersionQueryParam"
+$DataDir = "$([Environment]::GetFolderPath([System.Environment+SpecialFolder]::CommonApplicationData))\com.guardz"
+$StateFilePath = "$DataDir\auth-state.json"
+
+function SetDataDirPermissions ($DataDirFiles, $TargetUsersGroup) {
+  foreach ($DataDirFile in $DataDirFiles) {
+    $Acl = Get-Acl $DataDirFile
+
+    foreach ($AccessRule in $Acl.Access) {
+      $Acl.RemoveAccessRule($AccessRule) > $null
+    }
+
+    $Permission = $TargetUsersGroup, "FullControl", "None", "None", "Allow"
+    $NewAccessRule = New-Object System.Security.AccessControl.FileSystemAccessRule $Permission
+    $Acl.SetAccessRuleProtection($true, $false)
+    $Acl.ResetAccessRule($NewAccessRule)
+    Set-Acl -Path $DataDirFile -AclObject $Acl
+  }
+}
+
+function Main () {
+  $CurrentUser = [System.Security.Principal.WindowsIdentity]::GetCurrent()
+  $CurrentUserPrincipal = New-Object System.Security.Principal.WindowsPrincipal($CurrentUser)
+  $IsCurrentUserAdmin = $CurrentUserPrincipal.IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator)
+  $WindowsVersion = [System.Environment]::OSVersion.Version
+
+  if ($WindowsVersion.Major -lt 10) {
+    throw "Guardz Agent may only be installed on Windows 10 or newer"
+  }
+
+  if (!$IsCurrentUserAdmin) {
+    throw "This script must be run as an administrator."
+  }
+
+  if ($OrganizationKey.Length -eq 0) {
+    throw "Organization key was not provided. (as first argument of the script or using the named parameter -OrganizationKey)"
+  }
+
+  if (Test-Path $InstallerTempPath) {
+    Remove-Item -Path $InstallerTempPath -Force
+  }
+
+  $WebClient = New-Object System.Net.WebClient
+  $WebClient.DownloadFile($DownloadURL, $InstallerTempPath)
+
+  # We then try to uninstall an existing agent using the msiexec uninstaller
+  # It will not work for a SYSTEM user for old installation, but will work for new or manual installations
+  $UninstallerProcess = Start-Process msiexec.exe -Wait -PassThru -ArgumentList "/x ""$InstallerTempPath"" /qn"
+
+  # If the uninstaller returns 1605, it means that the device agent was not installed.
+  # We ignore this case and continue with the installation.
+  if ($UninstallerProcess.ExitCode -eq 0 -Or $UninstallerProcess.ExitCode -eq 1605) {
+    Stop-Service -Name "Guardz Agent" -Force -ErrorAction SilentlyContinue
+    Start-Sleep -Seconds 3
+    Stop-Process -Name $ProcessName -Force -ErrorAction SilentlyContinue
+    Start-Sleep -Seconds 3
+  }
+  else {
+    throw "Unable to uninstall existing Guardz device agent. Try to uninstall it manually. (exit code: $($UninstallerProcess.ExitCode))"
+  }
+
+  # We reset the permissions on the data directory to avoid any permission issue
+  if (Test-Path $DataDir) {
+    # SID for the Administrators group - this should be the same on all Windows systems
+    $AdminsGroup = New-Object System.Security.Principal.SecurityIdentifier("S-1-5-32-544")
+    SetDataDirPermissions (, $DataDir) $AdminsGroup
+    SetDataDirPermissions (Get-ChildItem $DataDir -Recurse | ForEach-Object { $_.FullName }) $AdminsGroup
+  }
+
+  # Write the organization key to the state file.
+  # Needs to be done before the installation (in case the user launches the agent immediately after installation)
+  New-Item -ItemType Directory -Force -Path $DataDir > $null
+  [System.IO.File]::WriteAllLines($StateFilePath, "{""organization_key"":""$OrganizationKey""}")
+
+  # We set the permissions on the data directory and all its files to only allow SYSTEM to access it
+  # SID for the System user - this should be the same on all Windows systems
+  $SystemUser = New-Object System.Security.Principal.SecurityIdentifier("S-1-5-18")
+  $DataDirFiles = Get-ChildItem $DataDir -Recurse | ForEach-Object { $_.FullName }
+  if (!($DataDirFiles -is [array])) {
+    $DataDirFiles = , $DataDirFiles
+  }
+  SetDataDirPermissions ($DataDirFiles += $DataDir) $SystemUser
+
+  $InstallerProcess = Start-Process msiexec.exe -Wait -PassThru -ArgumentList "/I ""$InstallerTempPath"" /qn"
+  Remove-Item -Path $InstallerTempPath -Force
+
+  if ($InstallerProcess.ExitCode -ne 0) {
+    throw "Unable to install Guardz device agent."
+  }
+}
+
+Main
