@@ -1,10 +1,7 @@
 
-$Key = Read-Host -Prompt "Enter Key to continue"
+$OrganizationKey = Read-Host -Prompt "Enter Key to continue"
 
 param (
-  [Parameter()]
-  [string]$OrganizationKey = "$Key",
-
   [Parameter()]
   [string]$Version = ""
 )
