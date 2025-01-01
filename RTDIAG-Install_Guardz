@@ -168,3 +168,18 @@ function Main () {
 }
 Main
 }
+
+$Software = "AteraAgent", "Guardz Agent", "Synology Active Backup", "Sentinel Agent"
+
+$Software | foreach {
+    $Name = $_
+    $Check = Get-WmiObject -Class Win32_Product | Select-Object -Property Name, Version, InstallDate | where {$_.name -like "*$($Name)*"}
+    If ($Check.Name) {
+        Write-Host "Results for $($Name):"
+        Write-Host "    Name:           $($Check.name)" 
+        Write-Host "    Version:        $($Check.version)" 
+        Write-Host "    InstallDate:    $($Check.InstallDate)" 
+    } else {
+        Write-Host "$($Name) not installed."
+    }
+}
