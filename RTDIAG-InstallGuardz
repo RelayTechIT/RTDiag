@@ -53,7 +53,7 @@ if (!($token)) {
 }
 
 
-_InstallGuardz {
+Function _InstallGuardz {
     
 if (!($key)) {
     Write-host "Enter Organization Key to Continue"
