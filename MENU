@@ -1,3 +1,12 @@
+
+$PreMenu   =   @()
+$PreMenu    +=    "Computername: $($Info.CsDNSHostName)"
+$PreMenu    +=    "Make\Model: $($Info.CsManufacturer) $($Info.CsProcessors)"
+$PreMenu    +=    "Processor: $($Info.CsProcessors)"
+$PreMenu    +=    "Memory: $($Info.CsTotalPhysicalMemory)"
+$PreMenu    +=    ""
+$PreMenu    +=    "Select an option to continue:"   
+
 $MenuOptions   =   @(
     [PSCustomObject]@{DisplayName = 'Performace Check'; FunctionName = 'RTDiag-PerfCheck'}
     [PSCustomObject]@{DisplayName = 'Query Users'; FunctionName = 'RTDiag-QueryUsers'}
