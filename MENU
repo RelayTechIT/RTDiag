@@ -23,3 +23,9 @@ $MenuOptions   =   @(
     [PSCustomObject]@{DisplayName = 'Local Security Checks'; FunctionName = 'RTDIAG-LocalSecurityChecks'}
     [PSCustomObject]@{DisplayName = 'DoD DISA SCAP Scan v5.9'; FunctionName = 'RTDiag-SCAPScan-v5.9'}
     )
+
+
+$PostMenu   =   @()
+$PostMenu    +=    ""
+$PostMenu    +=    "   99  -   End Script"
+$PostMenu    +=    ""
