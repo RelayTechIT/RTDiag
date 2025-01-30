@@ -1,0 +1,16 @@
+$MenuOptions   =   @(
+    [PSCustomObject]@{DisplayName = 'Performace Check'; FunctionName = 'RTDiag-PerfCheck'}
+    [PSCustomObject]@{DisplayName = 'Query Users'; FunctionName = 'RTDiag-QueryUsers'}
+    [PSCustomObject]@{DisplayName = 'IPv6 Check'; FunctionName = 'RTDiag-IPv6Check'}
+    [PSCustomObject]@{DisplayName = 'Test Internet Speed'; FunctionName = 'RTDiag-Test-Bandwidth'}
+    [PSCustomObject]@{DisplayName = 'Check System Uptime'; FunctionName = 'RTDiag-Check-System-Uptime'}
+    [PSCustomObject]@{DisplayName = 'Check Windows Time'; FunctionName = 'RTDiag-Check-WindowsTime'}
+    [PSCustomObject]@{DisplayName = 'Set Power Management'; FunctionName = 'RTDiag-Set-PowerManagement'}
+    [PSCustomObject]@{DisplayName = 'Update Chocolatey Packages'; FunctionName = 'RTDiag-ChocoUpdate'}
+    [PSCustomObject]@{DisplayName = 'Apply Missing Windows Updates'; FunctionName = 'RTDiag-WinUpdate'}
+    [PSCustomObject]@{DisplayName = 'Fix Active Backup Errors'; FunctionName = 'RTDiag-Check-ActiveBackup'}
+    [PSCustomObject]@{DisplayName = 'Disk Space Cleanup'; FunctionName = 'RTDiag-Disk-Cleanup'}
+    [PSCustomObject]@{DisplayName = 'Check Disk for Issues'; FunctionName = 'RTDiag-Check-Disks'}
+    [PSCustomObject]@{DisplayName = 'Local Security Checks'; FunctionName = 'RTDIAG-LocalSecurityChecks'}
+    [PSCustomObject]@{DisplayName = 'DoD DISA SCAP Scan v5.9'; FunctionName = 'RTDiag-SCAPScan-v5.9'}
+    )
