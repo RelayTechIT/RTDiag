@@ -8,7 +8,7 @@ $PreMenu    +=    ""
 $PreMenu    +=    "Select an option to continue:"   
 
 $MenuOptions   =   @(
-    [PSCustomObject]@{DisplayName = 'Performace Check'; FunctionName = 'RTDiag-PerfCheck'}
+    [PSCustomObject]@{DisplayName = 'Get Top Processes'; FunctionName = 'RTDiag-Get-TopProcesses'}
     [PSCustomObject]@{DisplayName = 'Query Users'; FunctionName = 'RTDiag-QueryUsers'}
     [PSCustomObject]@{DisplayName = 'IPv6 Check'; FunctionName = 'RTDiag-IPv6Check'}
     [PSCustomObject]@{DisplayName = 'Test Internet Speed'; FunctionName = 'RTDiag-Test-Bandwidth'}
