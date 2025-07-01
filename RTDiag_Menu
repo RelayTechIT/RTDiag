@@ -5,7 +5,7 @@
 # [PSCustomObject]@{DisplayName = '<Name of Script>'; FunctionName = '<Name of Function>'}
 
 $PreMenu   =   @(
-    [PSCustomObject]@{DisplayName = 'Performace Check'; FunctionName = 'RTDiag-PerfCheck'}
+    [PSCustomObject]@{DisplayName = 'Get Top Processes'; FunctionName = 'RTDiag-Get-TopProcesses'}
     [PSCustomObject]@{DisplayName = 'IPv6 Check'; FunctionName = 'RTDiag-IPv6Check'}
     [PSCustomObject]@{DisplayName = 'Test Internet Speed'; FunctionName = 'RTDiag-Test-Bandwidth'}
     [PSCustomObject]@{DisplayName = 'Check System Uptime'; FunctionName = 'RTDiag-Check-System-Uptime'}
