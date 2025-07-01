@@ -1,0 +1,41 @@
+$ErrorActionPreference  =   'Stop'
+$ProgressPreference     =   'SilentlyContinue'
+
+try {
+    if (!$SampleTime) {$SampleTime =   60}
+    if (!$ListTop) {$ListTop =   10}
+
+    # Get initial sample
+    Write-Host "Taking initial Sample"
+        $initial = Get-Process | Select-Object Name, Id, CPU
+    Write-Host "Waiting for $($SampleTime) seconds"
+        Start-Sleep -Seconds $SampleTime
+
+    # Get second sample
+    Write-Host "Taking second Sample"
+        $final = Get-Process | Select-Object Name, Id, CPU
+
+    # Join samples and calculate CPU delta
+    $cpuDeltas = foreach ($proc in $final) {
+        $match = $initial | Where-Object { $_.Id -eq $proc.Id }
+        if ($match) {
+            [PSCustomObject]@{
+                Name = $proc.Name
+                Id   = $proc.Id
+                CPU_Usage = ($proc.CPU - $match.CPU) * 100 # rough % over 1s
+            }
+        }
+    }
+
+    # Sort and take top 5
+    $topLive = $cpuDeltas | Sort-Object -Property CPU_Usage -Descending | Select-Object -First $ListTop
+
+    # Display
+    "Overall CPU Utilization: {0:N2}%" -f $cpuUsage
+    "Top $($ListTop) Processes by Estimated CPU % ($($SampleTime)s interval):"
+    $topLive | Format-Table -AutoSize
+    
+}
+catch {
+    Write-Host "An error has occurred: $($_)" -ForegroundColor Red
+}
