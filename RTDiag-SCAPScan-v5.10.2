@@ -1,0 +1,151 @@
+
+$ProgressPreference = 'SilentlyContinue' 
+$ErrorActionPreference = "Continue"
+
+$Project    =   'DISA_SCAP'
+$Version    =   '5.10.2'
+$lcldir     =   'C:\RTSupport\Utilities'
+$lclfldr    =   $lcldir+'\'+$Project+'\'+$Version
+$URI = 'https://dl.dod.cyber.mil/wp-content/uploads/stigs/zip/scc-'+$Version+'_Windows_bundle.zip'
+
+$ZipFiles = @()
+$ZipFiles += 'scc-'+$Version+'_Windows_bundle.zip'
+$ZipFiles += 'scc-'+$Version+'_Windows.zip'
+
+$SCAPProfileOptions = "CAT_I_Only" , "MAC-1_Classified" , "MAC-1_Public" , "MAC-1_Sensitive" , "MAC-2_Classified" , "MAC-2_Public" , "MAC-2_Sensitive" , "MAC-3_Classified" , "MAC-3_Public" , "MAC-3_Sensitive"
+
+$SCAPProfileOptions | foreach {
+    if ($SCAPProfile -eq $_) {$SCAPRUN = 1}
+}
+
+if ($SCAPRUN -ne 1) {
+
+$ScapMenu   =   @(
+        [PSCustomObject]@{DisplayName = 'CAT_I_Only'}
+        [PSCustomObject]@{DisplayName = 'MAC-1_Classified'}
+        [PSCustomObject]@{DisplayName = 'MAC-1_Public'}
+        [PSCustomObject]@{DisplayName = 'MAC-1_Sensitive'}
+        [PSCustomObject]@{DisplayName = 'MAC-2_Classified'}
+        [PSCustomObject]@{DisplayName = 'MAC-2_Public'}
+        [PSCustomObject]@{DisplayName = 'MAC-2_Sensitive'}
+        [PSCustomObject]@{DisplayName = 'MAC-3_Classified'}
+        [PSCustomObject]@{DisplayName = 'MAC-3_Public'}
+        [PSCustomObject]@{DisplayName = 'MAC-3_Sensitive'}
+        
+    )
+
+    $n = 1
+    $Menu   =   @(
+    $ScapMenu | foreach {
+        [PSCustomObject]@{Prompt = $n; DisplayName = $_.DisplayName}
+        $n++
+    }
+    )
+
+    While (1) {
+        Write-Host "Select from one of the following SCAP scan profiles:"
+    
+        $Menu | foreach {
+            Write-Host  "   " $_.Prompt "  -   " $_.DisplayName
+        }
+        Write-Host ""
+        Write-Host "   99  -   Return to main menu"
+        Write-Host ""
+        $c = Read-Host
+    
+        If ($c -eq 99) {
+            Write-Host "Exiting Menu." -foregroundcolor yellow; Break;
+        } elseif ($menu | where Prompt -eq $c) {    
+            $SCAPRUN = 1
+            $SCAPProfile = ($menu | where Prompt -eq $c).DisplayName; Break;
+
+        } else {
+            Write-Host "Incorrect Selection. Pick again." -foregroundcolor yellow
+        }
+    }
+}
+
+if ($SCAPRUN -eq 1) {
+
+    Write-Host Create $lclfldr if it isnt there
+        If (!(Test-Path $lclfldr)) {new-item $lclfldr -ItemType Directory}
+
+    Write-Host If the cscc process is running, stop it
+        get-process cscc -ErrorAction SilentlyContinue | stop-process
+
+    write-host "Check if cscc.exe is already present and skip downloading if it is"
+        $cscc = gci -path $lclfldr -recurse cscc.exe
+            If (!($cscc)) {
+                Write-Host Download the .zip file to $lclfldr\scc-$Version`_Windows_bundle.zip
+                    iwr -Uri $URI -OutFile $lclfldr\scc-$Version`_Windows_bundle.zip
+            
+                $ZipFiles | foreach {
+                    Write-Host "Locate the file:" $_ "and extract it to:" $lclfldr
+                    $gci = (gci -Path $lclfldr -recurse $_)
+                    expand-archive $gci.FullName $gci.DirectoryName -Force
+                }      
+            }
+
+    write-host "locate cscc.exe and run it (This will take some minutes)"
+        $cscc = gci -path $lclfldr -recurse cscc.exe
+
+        $Args = "-ea --checkForContentUpdates --installAll"
+            If ($RunSilent) {$Args += " --quiet"}
+        Write-host "Running $($cscc.fullname) -ArgumentList $($Args)"
+        start-process -FilePath $cscc.fullname -ArgumentList $Args -Wait -NoNewWindow
+
+        $Args = "--SetProfileAll $($SCAPProfile)"
+            If ($RunSilent) {$Args += " --quiet"}
+        Write-host "Running $($cscc.fullname) -ArgumentList $($Args)"
+        start-process -FilePath $cscc.fullname -ArgumentList $Args -Wait -NoNewWindow
+
+        $Args = "-ear -u $($lclfldr)"
+            If ($RunSilent) {$Args += " --quiet"}
+        Write-host "Running $($cscc.fullname) -ArgumentList $($Args)"
+        start-process -FilePath $cscc.fullname -ArgumentList $Args -Wait -NoNewWindow
+
+    write-host "Zipping Results for easy extraction"
+            $session=gci $lclfldr\sessions | ? { $_.PSIsContainer } | sort CreationTime -desc | select -f 1
+            $Export =	$lclfldr+'\_Archive\'+$Session.name+'_'+$env:COMPUTERNAME
+            New-Item $Export -itemtype Directory
+
+            $Src	= $session.fullname
+            $Dst	= $Export
+                robocopy $Src $Dst
+
+            $Src	= $session.fullname+'\Results\SCAP'
+            $Dst	= $Export+'\Results\SCAP'
+                robocopy $Src $Dst
+
+            Compress-Archive $export $export`.zip -force
+            
+
+    Write-Host "Results from this scan are located at" $export`.zip
+
+    #Cleanup
+            Write-Host "Cleaning up installation files:"
+                $ZipFiles | foreach {
+                    Write-Host "Locate the file:" $_ "and remove it."
+                    remove-item (gci -Path $lclfldr -recurse $_).FullName -recurse -force -ea silentlycontinue
+                }      
+                Write-Host "Removing:" $Export
+                    remove-item $Export -Recurse -Force -ea silentlycontinue
+
+    Write-host "Simplified Results:"
+    gci "$($Session.FullName)\Results\SCAP" -Filter "*All-Settings*.html" | foreach {
+    #    $Strings = "Stream:", "Pass:", "Fail:", "Not Applicable:", "Not Checked:", "Error:", "Not Selected:", "Unknown:", "Informational:","Fixed:","Total:","Adjusted Score:", "Original Score:"
+        $Strings = "Stream:", "Pass:", "Fail:", "Original Score:"
+        $html = Invoke-RestMethod $_.FullName
+            $Strings | foreach {
+            $reg_exp = $_ +'</td>'
+            $all_matches = ($html | Select-String $reg_exp -AllMatches).Matches
+            $Value = $html.Substring($all_matches.index,100).split('><')[4]
+    #        Write-Host "$($_)  $($Value)"
+            $Output += "$($_) $($Value) "
+        }
+    #    Write-Host ""
+        Write-host "$($Output)"
+        remove-variable output
+}
+
+}
