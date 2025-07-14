@@ -111,7 +111,7 @@ If ($ErrN -gt 0) {
         [PSCustomObject]@{DisplayName = 'Disk Space Cleanup'; FunctionName = 'RTDiag-Disk-Cleanup'}
         [PSCustomObject]@{DisplayName = 'Check Disk for Issues'; FunctionName = 'RTDiag-Check-Disks'}
         [PSCustomObject]@{DisplayName = 'Local Security Checks'; FunctionName = 'RTDIAG-LocalSecurityChecks'}
-        [PSCustomObject]@{DisplayName = 'DoD DISA SCAP Scan v5.9'; FunctionName = 'RTDiag-SCAPScan-v5.10.2'}
+        [PSCustomObject]@{DisplayName = 'DoD DISA SCAP Scan v5.10.2'; FunctionName = 'RTDiag-SCAPScan-v5.10.2'}
         [PSCustomObject]@{DisplayName = 'Run URL'; FunctionName = 'RTDiag-RunURLIEX'}
     )
 
