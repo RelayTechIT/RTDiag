@@ -98,7 +98,6 @@ If ($ErrN -gt 0) {
     
     $PreMenu   =   @(
         [PSCustomObject]@{DisplayName = 'Get Top Processes'; FunctionName = 'RTDiag-Get-TopProcesses'}
-        [PSCustomObject]@{DisplayName = 'Install Guardz'; FunctionName = 'RTDIAG-InstallGuardz'}
         [PSCustomObject]@{DisplayName = 'Query Users'; FunctionName = 'RTDiag-QueryUsers'}
         [PSCustomObject]@{DisplayName = 'IPv6 Check'; FunctionName = 'RTDiag-IPv6Check'}
         [PSCustomObject]@{DisplayName = 'Test Internet Speed'; FunctionName = 'RTDiag-Test-Bandwidth'}
@@ -112,7 +111,6 @@ If ($ErrN -gt 0) {
         [PSCustomObject]@{DisplayName = 'Check Disk for Issues'; FunctionName = 'RTDiag-Check-Disks'}
         [PSCustomObject]@{DisplayName = 'Local Security Checks'; FunctionName = 'RTDIAG-LocalSecurityChecks'}
         [PSCustomObject]@{DisplayName = 'DoD DISA SCAP Scan v5.10.2'; FunctionName = 'RTDiag-SCAPScan-v5.10.2'}
-        [PSCustomObject]@{DisplayName = 'Run URL'; FunctionName = 'RTDiag-RunURLIEX'}
     )
 
     $n = 1
