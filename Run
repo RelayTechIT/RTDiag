@@ -20,6 +20,7 @@ $LogName = ((Get-Date -UFormat "%Y.%m.%d_%R") -replace '[:]')+'_'+$env:COMPUTERN
     $ApprovedOperatingSystems    +=    'Microsoft Windows 11 Pro'
     $ApprovedOperatingSystems    +=    'Microsoft Windows 11 Home'
     $ApprovedOperatingSystems    +=    'Microsoft Windows Server 2012 R2 Standard'
+    $ApprovedOperatingSystems    +=    'Microsoft Windows Server 2016 Standard'
     $ApprovedOperatingSystems    +=    'Microsoft Windows Server 2019 Standard'
     $ApprovedOperatingSystems    +=    'Microsoft Windows Server 2022 Standard'
 
