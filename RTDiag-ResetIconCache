@@ -5,7 +5,8 @@ $iconcache = "$($env:LOCALAPPDATA)\Iconcache.db"
 $iconcachex = "$($env:LOCALAPPDATA)\Microsoft\Windows\Explorer\Iconcache.db"
 
 try {
-    Write-Host "Save all open work before you continue"
+    Write-Host "This fix will restore taskbar icons missing their images."
+    Write-Host "NOTICE - Save all open work before you continue"
     Pause
 
     ie4uinit.exe -show
