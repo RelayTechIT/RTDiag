@@ -54,35 +54,6 @@ if (!($IsAdmin)) {
 # }
 #}
 
-# Check for and install Required Modules
-function _CheckForModuleOrPackage {
-        param (
-            [Parameter(Mandatory=$true)]
-            [string]$PackageOrModuleName,
-            [Parameter(Mandatory=$true)]
-            [ValidateSet("Module","PackageProvider")]
-            [string]$PackageOrModuleType
-        )
-
-        try {
-            if (iex "Get-$($PackageOrModuleType) $($PackageOrModuleName) -ListAvailable -ea SilentlyContinue") {
-                Write-Host "$($PackageOrModuleType) $($PackageOrModuleName) already installed and imported." -ForegroundColor Green
-            } else {
-                iex "Install-$($PackageOrModuleType) -Name $($PackageOrModuleName) -Force"
-                iex "Import-$($PackageOrModuleType) -Name $($PackageOrModuleName)"
-                Write-Host "$($PackageOrModuleType) $($PackageOrModuleName) installed and imported successfully" -ForegroundColor Yellow
-            }
-        }
-        catch {
-            Write-Host "An error has occurred: $($_)"
-        }
-    }
-
-    _CheckForModuleOrPackage -PackageOrModuleName "NuGet" -PackageOrModuleType PackageProvider
-    _CheckForModuleOrPackage -PackageOrModuleName "Microsoft.WinGet.Client" -PackageOrModuleType Module
-    _CheckForModuleOrPackage -PackageOrModuleName "PSWindowsUpdate" -PackageOrModuleType Module
-    _CheckForModuleOrPackage -PackageOrModuleName "ImportExcel" -PackageOrModuleType Module
-
 # Begin the script transcript to the logfile
     cls
     Start-Transcript $LogTxt
@@ -111,6 +82,12 @@ if ($PSVersionTable.PSVersion.Major -lt $MinimumPowerShellVersion.Split(".")[0])
     If (!($OsPass)) {
         _ErrorMsg -ErrorMessage "OS: $($Info.OSName) is not an approved Operating System."
     }
+
+# Check for and install Required Packages or Modules
+    _CheckForModuleOrPackage -PackageOrModuleName "NuGet" -PackageOrModuleType PackageProvider
+    _CheckForModuleOrPackage -PackageOrModuleName "Microsoft.WinGet.Client" -PackageOrModuleType Module
+    _CheckForModuleOrPackage -PackageOrModuleName "PSWindowsUpdate" -PackageOrModuleType Module
+    _CheckForModuleOrPackage -PackageOrModuleName "ImportExcel" -PackageOrModuleType Module
 
 # Launch Menu if no pre-requsite errors
 If ($ErrN -gt 0) {
