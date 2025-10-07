@@ -1,0 +1,27 @@
+$ErrorActionPreference  =   'Stop'
+$ProgressPreference     =   'SilentlyContinue'
+$ExpDir                 =   "C:\RTSupport\Logs\EventLogs"
+$ts                     =   get-date -Format "yyyyMMddHHmmss"
+
+try {
+    #If Excel Module is not installed; install it.
+    if (!(Get-Module -ListAvailable -Name "ImportExcel")) {Install-Module -Name ImportExcel -Force}
+
+    # Create export directory if it does not exist
+    if (!(Test-Path $ExpDir)) {new-item $ExpDir -ItemType Directory -Force > $null}
+        
+    # Export the Application, Security, and System Event Logs to excel spreadsheets
+    "Application" , "Security" , "System" | foreach {
+        $ExpPath = "$($ExpDir)\$($_)_EventLog_$($ENV:COMPUTERNAME)_$($ts).xlsx"
+        Write-Host "Exporting $($_) Event Log to $($ExpPath)"
+        get-eventlog -LogName $_ | Export-Excel -Path $ExpPath -WorksheetName $_ -TableName $_ -AutoSize
+    }
+    Compress-Archive -Path "$($ExpDir)\*.xlsx" -DestinationPath "$($ExpDir)\Event_Logs-$($Env:COMPUTERNAME).zip"
+    Remove-Item -Path "$($ExpDir)\*.xlsx"
+    Write-Host ""
+    Write-Host "Event Logs Successfully exported and compressed to: $($ExpDir)\Event_Logs-$($Env:COMPUTERNAME).zip"
+}
+catch {
+    Write-Host "An error has occurred: $($_)" -ForegroundColor Red
+}
+
