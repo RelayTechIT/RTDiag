@@ -1,4 +1,3 @@
-
 #Variables Start
 
 $ErrorActionPreference = 'SilentlyContinue'
@@ -60,21 +59,24 @@ if (!($IsAdmin)) {
 
 # Script Start
 
-# Check Pre-Requsites
-#    iwr -useb 'https://raw.githubusercontent.com/RelayTechIT/RTDiag/main/RTDiag-PreRequsites' | iex
+    # Ensure TLS 1.2 is used (required for secure downloads)
+        if (([Net.ServicePointManager]::SecurityProtocol) -eq ([Net.SecurityProtocolType]::Tls12)) {
+            Write-Host "TLS 1.2 already set for downloads." -ForegroundColor Green
+        } else {
+            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+            Write-Host "TLS 1.2 is now set for downloads." -ForegroundColor Yellow
+        }
 
-# Check Execution Policy
-    If (Get-ExecutionPolicy -Scope Process -neq "Bypass") {
-        Write-Verbose 'Setting Execution Policy to "Bypass" in scope "process"'
-        Set-ExecutionPolicy Bypass -Scope Process -Force
-    }
-
-
-# Check Powershell version
-if ($PSVersionTable.PSVersion.Major -lt $MinimumPowerShellVersion.Split(".")[0]) {
-    _ErrorMsg -ErrorMessage "Minimum Powershell version is $($MinimumPowerShellVersion). Update Powershell and run again."
-    _ErrorMsg -ErrorMessage $PSVersionTable
-}
+    # Ensure the Executionpolicy is set
+        $ExecutionScope     =   "CurrentUser"
+        $ExecutionPolicy    =   "RemoteSigned"
+        $GetExecutionPolicy = Get-ExecutionPolicy -Scope $ExecutionScope
+        if ($GetExecutionPolicy -eq $ExecutionPolicy) {
+            Write-Host "ExecutionPolicy scope $($ExecutionScope) already set to $($ExecutionPolicy)" -ForegroundColor Green
+        } else {
+            Set-ExecutionPolicy -Scope $ExecutionScope $ExecutionPolicy -Force > $null
+            Write-Host "ExecutionPolicy scope $($ExecutionScope) set to $($ExecutionPolicy)" -ForegroundColor Yellow
+        }
 
 # Check Operating System
     $Info = Get-ComputerInfo
