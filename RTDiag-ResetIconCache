@@ -1,0 +1,33 @@
+$ErrorActionPreference  =   'Stop'
+$ProgressPreference     =   'SilentlyContinue'
+
+$iconcache = "$($env:LOCALAPPDATA)\Iconcache.db"
+$iconcachex = "$($env:LOCALAPPDATA)\Microsoft\Windows\Explorer\Iconcache.db"
+
+try {
+    Write-Host "Save all open work before you continue"
+    Pause
+
+    ie4uinit.exe -show
+    sleep 2
+
+    get-process "explorer" -ea SilentlyContinue | Stop-Process
+        Write-Host "Stopped process explorer.exe" -ForegroundColor Green
+
+    $iconcache , $iconcachex | foreach {
+        if (test-path $_) {
+            Remove-Item $_ -Force
+            Write-Host "Deleted file:   $($_)" -ForegroundColor Green
+        } else {
+            Write-Host "File not found: $($_)" -ForegroundColor Yellow
+        }
+    }
+
+    Start-Process "explorer"
+        Write-Host "Started process explorer.exe" -ForegroundColor Green
+}
+catch {
+    Write-Host "An error has occurred: $($_)" -ForegroundColor Red
+}
+
+
