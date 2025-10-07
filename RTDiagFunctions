@@ -1,5 +1,28 @@
 # Functions Start
 
+function _CheckForModuleOrPackage {
+    param (
+        [Parameter(Mandatory=$true)]
+        [string]$PackageOrModuleName,
+        [Parameter(Mandatory=$true)]
+        [ValidateSet("Module","PackageProvider")]
+        [string]$PackageOrModuleType
+    )
+
+    try {
+        if (iex "Get-$($PackageOrModuleType) $($PackageOrModuleName) -ListAvailable -ea SilentlyContinue") {
+            Write-Host "$($PackageOrModuleType) $($PackageOrModuleName) already installed and imported." -ForegroundColor Green
+        } else {
+            iex "Install-$($PackageOrModuleType) -Name $($PackageOrModuleName) -Force"
+            iex "Import-$($PackageOrModuleType) -Name $($PackageOrModuleName)"
+            Write-Host "$($PackageOrModuleType) $($PackageOrModuleName) installed and imported successfully" -ForegroundColor Yellow
+        }
+    }
+    catch {
+        Write-Host "An error has occurred: $($_)"
+    }
+}
+
 function _DirDelete {
     param ($DirectoryPath)
 
