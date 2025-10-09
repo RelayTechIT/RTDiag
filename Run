@@ -100,6 +100,7 @@ If ($ErrN -gt 0) {
         [PSCustomObject]@{DisplayName = 'Test Internet Speed'; FunctionName = 'RTDiag-Test-Bandwidth'}
         [PSCustomObject]@{DisplayName = 'Check System Uptime'; FunctionName = 'RTDiag-Check-System-Uptime'}
         [PSCustomObject]@{DisplayName = 'Check \ Fix Windows Time'; FunctionName = 'RTDiag-Check-WindowsTime'}
+        [PSCustomObject]@{DisplayName = 'MS Teams Fix'; FunctionName = 'RTDiag-Fix-MSTeams'}
         [PSCustomObject]@{DisplayName = 'Set Power Management'; FunctionName = 'RTDiag-Set-PowerManagement'}
         [PSCustomObject]@{DisplayName = 'Apply Windows Updates'; FunctionName = 'RTDiag-WinUpdate'}
         [PSCustomObject]@{DisplayName = 'Update all MS Store Apps (AppxPackages)'; FunctionName = 'RTDIAG-Update-AppxPackages'}
