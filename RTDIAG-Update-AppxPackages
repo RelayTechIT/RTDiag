@@ -1,0 +1,28 @@
+$Status = @{
+    Index = 1
+    Total = 0
+    Successful = 0
+    Unsuccessful = 0
+}
+
+    $n = 1
+    $AppxPackages = Get-AppxPackage -AllUsers | select *
+    $Status.Total = $AppxPackages.count
+    Write-Host "$($Status.Total) Packages found. Press any key to update now."
+    pause
+    foreach ($AppxPackage in $AppxPackages) {
+                Add-AppxPackage -Register "$($AppxPackage.InstallLocation)\AppxManifest.xml" -DisableDevelopmentMode -ea SilentlyContinue > $null
+                if ($?) {
+                    Write-Host "SUCCESS: Updated Package $($AppxPackage.Name) (Package $($n) of $($AppxPackages.count))" -ForegroundColor Green
+                    $Status.Successful++
+                } else {
+                    Write-Host "FAILURE: Unable to update Package $($AppxPackage.Name) (Package $($n) of $($AppxPackages.count))" -ForegroundColor Yellow
+                    $Status.Unsuccessful++
+                }
+        $Status.Index++
+    }
+    Write-Host ""
+    Write-Host "Update complete"
+    Write-Host "    Total Packages:         $($Status.Total)"
+    Write-Host "    Updated Packages:       $($Status.Successful)"
+    Write-Host "    Not Updated Packages:   $($Status.Unsuccessful)"
