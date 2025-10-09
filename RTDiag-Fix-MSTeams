@@ -1,0 +1,16 @@
+$ErrorActionPreference  =   'Stop'
+$ProgressPreference     =   'SilentlyContinue'
+
+Write-Host "Microsoft Teams will be uninstalled \ reinstalled. Press any key to continue."
+
+# Remove Teams AppxPackage
+    get-appxpackage -Allusers | where {$_.Name -like "*Teams*"} | remove-appxpackage -AllUsers
+# Remove Teams AppxProvisionedPackage
+    get-appxprovisionedpackage -Online | where {$_.DisplayName -like "*Teams*"} | remove-appxprovisionedpackage -AllUsers
+
+# Reinstall Teams
+    $d = "C:\RTSupport"; $f = "teamsbootstrapper.exe"
+    irm "https://statics.teams.cdn.office.net/production-teamsprovision/lkg/$($f)" -OutFile "$($d)\$($f)"
+    iex "$($d)\$($f) -x"
+    iex "$($d)\$($f) -p"
+    remove-item "$($d)\$($f)"
