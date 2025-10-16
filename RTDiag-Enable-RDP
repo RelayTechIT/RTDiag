@@ -1,0 +1,24 @@
+$ErrorActionPreference = 'Stop'
+$ProgressPreference = 'SilentlyContinue'
+
+$RegistrySettings = @(
+    [PSCustomObject]@{ Path = "HKLM:\System\CurrentControlSet\Control\Terminal Server"; Name = "fDenyTSConnections" ; Value = 0}
+    [PSCustomObject]@{ Path = "HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp"; Name = "UserAuthentication" ; Value = 1}
+)
+
+try {
+    $RegistrySettings | foreach {
+        Set-ItemProperty -Path $_.Path -Name $_.Name -Value $_.Value
+    }
+        Write-Host "Enabled RDP in Registry"
+    Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+        Write-Host "Enabled RDP in Windows Firewall"
+    Get-Service "TermService" | Restart-Service -Force
+        Write-Host "Restarted RDP Service"
+        Write-Host ""
+        Write-Host "You can now connect to this PC using IP Address: $((Get-NetIPAddress -AddressFamily IPv4 | where {$_.PrefixOrigin -eq "Dhcp"}).IPAddress)" -ForegroundColor Green
+
+}
+catch {
+    Write-Host "An error occurred: $($_)" -ForegroundColor Red
+}
