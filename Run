@@ -103,6 +103,7 @@ If ($ErrN -gt 0) {
         [PSCustomObject]@{DisplayName = 'MS Teams Fix'; FunctionName = 'RTDiag-Fix-MSTeams'}
         [PSCustomObject]@{DisplayName = 'Set Power Management'; FunctionName = 'RTDiag-Set-PowerManagement'}
         [PSCustomObject]@{DisplayName = 'Apply Windows Updates'; FunctionName = 'RTDiag-WinUpdate'}
+        [PSCustomObject]@{DisplayName = 'Enable Remote Desktop'; FunctionName = 'RTDiag-Enable-RDP'}
         [PSCustomObject]@{DisplayName = 'Update all MS Store Apps (AppxPackages)'; FunctionName = 'RTDIAG-Update-AppxPackages'}
         [PSCustomObject]@{DisplayName = 'Update Chocolatey Packages'; FunctionName = 'RTDiag-ChocoUpdate'}
         [PSCustomObject]@{DisplayName = 'Fix Active Backup Errors'; FunctionName = 'RTDiag-Check-ActiveBackup'}
