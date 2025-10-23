@@ -1,0 +1,8 @@
+
+$d = "C:\RTSupport\Utilities\IISCryptoCli"
+if (!(test-path $d)) {new-item $d -itemtype Directory -force > $null}
+irm https://download.nartacsoftware.com/IISCrypto/IISCryptoCli.exe -OutFile "$($d)\IISCryptoCli.exe"
+
+cd $d
+& .\IISCryptoCli.exe /backup iiscryptocli.txt
+& .\IISCryptoCli.exe /template best
