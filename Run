@@ -45,14 +45,6 @@ if (!($IsAdmin)) {start powershell -verb runas -ArgumentList {iwr -useb 'diag.re
     Start-Transcript $LogTxt
 
 # Script Start
-    # Ensure TLS 1.2 is used (required for secure downloads)
-        if (([Net.ServicePointManager]::SecurityProtocol) -eq ([Net.SecurityProtocolType]::Tls12)) {
-            Write-Host "TLS 1.2 already set for downloads." -ForegroundColor Green
-        } else {
-            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-            Write-Host "TLS 1.2 is now set for downloads." -ForegroundColor Yellow
-        }
-
     # Ensure the Executionpolicy is set
         $ExecScope     =   "CurrentUser"
         $ExecPolicy    =   "RemoteSigned"
