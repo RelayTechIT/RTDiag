@@ -13,7 +13,7 @@ try {
         Write-Host "Enabled RDP in Registry"
     Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
         Write-Host "Enabled RDP in Windows Firewall"
-    Get-Service "TermService" | Restart-Service -Force
+    Get-Service "TermService" | Restart-Service
         Write-Host "Restarted RDP Service"
         Write-Host ""
         Write-Host "You can now connect to this PC using IP Address: $((Get-NetIPAddress -AddressFamily IPv4 | where {$_.PrefixOrigin -eq "Dhcp"}).IPAddress)" -ForegroundColor Green
