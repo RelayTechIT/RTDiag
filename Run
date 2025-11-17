@@ -85,6 +85,7 @@ If ($ErrN -gt 0) {
     
     $PreMenu   =   @(
         [PSCustomObject]@{DisplayName = 'Set TLS to "Best" Template using IISCryptoCli'; FunctionName = 'RTDIAG-IISCryptoCli'}
+        [PSCustomObject]@{DisplayName = 'Enable Remote Desktop" Template using IISCryptoCli'; FunctionName = 'RTDiag-EnableRemoteDesktop'}
         [PSCustomObject]@{DisplayName = 'Get Top Processes'; FunctionName = 'RTDiag-Get-TopProcesses'}
         [PSCustomObject]@{DisplayName = 'Reset Windows Search Index'; FunctionName = 'RTDIAG-ResetWinSearch'}
         [PSCustomObject]@{DisplayName = 'Set Event Log size'; FunctionName = 'RTDiag-SetEventLogSize'}
