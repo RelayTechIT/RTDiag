@@ -1,0 +1,4 @@
+get-service WSearch | Stop-Service
+if (test-path "C:\ProgramData\Microsoft\Search\Data\Applications\Windows\Windows.db") {Remove-Item "C:\ProgramData\Microsoft\Search\Data\Applications\Windows\Windows.db"}
+Set-itemproperty -path "HKLM:\SOFTWARE\Microsoft\Windows Search" -Name "SetupCompletedSuccessfully" -Value 0
+get-service WSearch | Start-Service
