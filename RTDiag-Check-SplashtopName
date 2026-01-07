@@ -1,0 +1,13 @@
+$RegPath = "HKLM:\SOFTWARE\WOW6432Node\Splashtop Inc.\Splashtop Remote Server"
+$RegName = "CloudComputerName"
+
+if (Test-Path -Path $RegPath) {
+    if (get-service SplashtopRemoteService) {
+        if ($(Get-ItemPropertyValue -Path $RegPath -Name $RegName) -ne $($Env:COMPUTERNAME)) {
+            Set-ItemProperty -Path $RegPath -Name $RegName -Value $ENV:COMPUTERNAME -Force
+            Write-Host "Set splashtop name to computer name. Change will take effect next reboot"
+    } else {
+        Write-Host "No changes made."
+    }
+}
+}
