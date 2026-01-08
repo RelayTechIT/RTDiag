@@ -84,6 +84,7 @@ If ($ErrN -gt 0) {
     # [PSCustomObject]@{DisplayName = '<Name of Script>'; FunctionName = '<Name of Function>'}
     
     $PreMenu   =   @(
+        [PSCustomObject]@{DisplayName = 'Clear DNS Client Cache'; FunctionName = 'RTDIAG-ClearDNSCache'}
         [PSCustomObject]@{DisplayName = 'Set TLS to "Best" Template using IISCryptoCli'; FunctionName = 'RTDIAG-IISCryptoCli'}
         [PSCustomObject]@{DisplayName = 'Get Top Processes'; FunctionName = 'RTDiag-Get-TopProcesses'}
         [PSCustomObject]@{DisplayName = 'Reset Windows Search Index'; FunctionName = 'RTDIAG-ResetWinSearch'}
