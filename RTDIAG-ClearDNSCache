@@ -1,0 +1,14 @@
+try {
+    $user = [Security.Principal.WindowsIdentity]::GetCurrent()
+    $isSystem = $user.IsSystem
+    $isAdmin = (New-Object Security.Principal.WindowsPrincipal($user)).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+    if (($isSystem) -or ($isAdmin)) {
+        Clear-DnsClientCache
+        Write-Host "Successfully flushed the DNS Client Cache."
+    } else {
+        Throw "You must be admin or system to clear the DNS cache"
+    }
+}
+catch {
+    Write-Host "An error occurred: $($_)" -ForegroundColor Red
+}
