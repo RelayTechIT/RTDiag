@@ -1,0 +1,46 @@
+# Remove Microsoft Teams
+<#
+.SYNOPSIS
+    Completely removes Microsoft Teams for all users and prevents auto-reinstallation.
+#>
+
+# Run as Administrator
+if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
+    Write-Error "Please run this script as Administrator."
+    exit 1
+}
+
+Write-Host "Stopping Microsoft Teams processes..." -ForegroundColor Yellow
+Get-Process -Name Teams -ErrorAction SilentlyContinue | Stop-Process -Force
+
+# Remove Teams for all existing user profiles
+Write-Host "Removing Teams from all user profiles..." -ForegroundColor Yellow
+$users = Get-ChildItem "C:\Users" -Directory | Where-Object { Test-Path "$($_.FullName)\AppData\Local\Microsoft\Teams" }
+
+foreach ($user in $users) {
+    $teamsPath = "$($user.FullName)\AppData\Local\Microsoft\Teams"
+    $updatePath = "$($user.FullName)\AppData\Local\Microsoft\Teams\Update"
+    $updateExe  = "$updatePath\Update.exe"
+
+    if (Test-Path $updateExe) {
+        Write-Host "Uninstalling Teams for user: $($user.Name)" -ForegroundColor Cyan
+        & $updateExe --uninstall -s
+    }
+
+    # Remove leftover Teams folders
+    Remove-Item "$($user.FullName)\AppData\Local\Microsoft\Teams" -Recurse -Force -ErrorAction SilentlyContinue
+    Remove-Item "$($user.FullName)\AppData\Roaming\Microsoft\Teams" -Recurse -Force -ErrorAction SilentlyContinue
+}
+
+# Remove Teams Machine-Wide Installer
+Write-Host "Removing Teams Machine-Wide Installer..." -ForegroundColor Yellow
+$machineWide = Get-WmiObject -Class Win32_Product | Where-Object { $_.Name -like "Teams Machine-Wide Installer*" }
+if ($machineWide) {
+    $machineWide.Uninstall() | Out-Null
+}
+
+# Remove Teams installation from Program Files
+Remove-Item "C:\Program Files (x86)\Teams Installer" -Recurse -Force -ErrorAction SilentlyContinue
+
+Write-Host "Microsoft Teams has been completely removed." -ForegroundColor Green
+Write-Host "You may want to restart your computer to finalize cleanup." -ForegroundColor Green
