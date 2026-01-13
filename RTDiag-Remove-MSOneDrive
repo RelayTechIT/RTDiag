@@ -1,0 +1,25 @@
+# Remove OneDrive
+# Run as Administrator
+
+Write-Host "Stopping OneDrive processes..." -ForegroundColor Yellow
+Stop-Process -Name OneDrive -Force -ErrorAction SilentlyContinue
+
+Write-Host "Uninstalling OneDrive for all users..." -ForegroundColor Yellow
+Get-AppxPackage -AllUsers *OneDrive* | Remove-AppxPackage -ErrorAction SilentlyContinue
+Get-AppxProvisionedPackage -Online | Where-Object DisplayName -like "*OneDrive*" | Remove-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue
+
+Write-Host "Removing leftover OneDrive folders..." -ForegroundColor Yellow
+$folders = @("$env:USERPROFILE\OneDrive", "$env:LOCALAPPDATA\Microsoft\OneDrive", "$env:PROGRAMDATA\Microsoft OneDrive")
+foreach ($folder in $folders) {if (Test-Path $folder) {Remove-Item $folder -Recurse -Force -ErrorAction SilentlyContinue}}
+
+Write-Host "Removing OneDrive from Explorer sidebar..." -ForegroundColor Yellow
+# Registry tweak to hide OneDrive from File Explorer
+    $regPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Desktop\NameSpace"
+    $oneDriveKey = "{018D5C66-4533-4307-9B53-224DE2ED1FE6}"
+    if (Test-Path "$regPath\$oneDriveKey") {Remove-Item "$regPath\$oneDriveKey" -Recurse -Force -ErrorAction SilentlyContinue}
+
+Write-Host "Restarting Explorer..." -ForegroundColor Yellow
+Stop-Process -Name explorer -Force
+Start-Process explorer
+
+Write-Host "OneDrive has been completely removed." -ForegroundColor Green
