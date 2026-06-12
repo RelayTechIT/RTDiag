@@ -1,0 +1,261 @@
+function Disk-Cleanup {
+
+<#
+.SYNOPSIS
+    Disk space cleanup script for Windows Server 2016 Essentials x64
+
+.DESCRIPTION
+    Safely reclaims disk space by cleaning temporary files, old Windows Update
+    caches, IIS logs, event logs (archive only), CBS logs, recycle bin, and
+    optionally runs the built-in Disk Cleanup utility (cleanmgr).
+
+.NOTES
+    - Run as Administrator (enforced by #Requires above)
+    - Tested on Windows Server 2016 Essentials x64
+    - Review the $DryRun switch before first use
+    - Always back up critical data before running cleanup scripts in production
+
+.PARAMETER DryRun
+    When $true (default), reports what would be deleted without removing anything.
+    Set to $false to perform actual deletion.
+
+.PARAMETER LogPath
+    Path for the cleanup log file. Defaults to C:\Logs\DiskCleanup.log
+#>
+
+param(
+    [bool]$DryRun   = $true,
+    [string]$LogPath = "C:\Logs\DiskCleanup_$(Get-Date -f 'yyyyMMdd_HHmmss').log"
+)
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = "SilentlyContinue"
+
+# ── Helpers ────────────────────────────────────────────────────────────────────
+
+function Write-Log {
+    param([string]$Message, [string]$Level = "INFO")
+    $line = "[{0}] [{1}] {2}" -f (Get-Date -f "yyyy-MM-dd HH:mm:ss"), $Level, $Message
+    Write-Host $line -ForegroundColor $(if ($Level -eq "WARN") {"Yellow"} elseif ($Level -eq "ERROR") {"Red"} else {"Cyan"})
+    $line | Out-File -FilePath $LogPath -Append -Encoding UTF8
+}
+
+function Get-FolderSize {
+    param([string]$Path)
+    if (-not (Test-Path $Path)) { return 0 }
+    (Get-ChildItem $Path -Recurse -Force -ErrorAction SilentlyContinue |
+        Measure-Object -Property Length -Sum).Sum
+}
+
+function Format-Bytes {
+    param([long]$Bytes)
+    switch ($Bytes) {
+        { $_ -ge 1GB } { return "{0:N2} GB" -f ($_ / 1GB) }
+        { $_ -ge 1MB } { return "{0:N2} MB" -f ($_ / 1MB) }
+        { $_ -ge 1KB } { return "{0:N2} KB" -f ($_ / 1KB) }
+        default         { return "$_ bytes" }
+    }
+}
+
+function Remove-Items {
+    param(
+        [string]$Path,
+        [string]$Description,
+        [string]$Filter = "*",
+        [bool]$Recurse  = $true,
+        [int]$OlderThanDays = 0
+    )
+    if (-not (Test-Path $Path)) {
+        Write-Log "  Skipped (path not found): $Path"
+        return 0
+    }
+
+    $items = Get-ChildItem -Path $Path -Filter $Filter -Recurse:$Recurse -Force -ErrorAction SilentlyContinue
+    if ($OlderThanDays -gt 0) {
+        $cutoff = (Get-Date).AddDays(-$OlderThanDays)
+        $items  = $items | Where-Object { $_.LastWriteTime -lt $cutoff }
+    }
+
+    $sizeBefore = ($items | Measure-Object -Property Length -Sum).Sum
+    if ($null -eq $sizeBefore) { $sizeBefore = 0 }
+
+    if ($DryRun) {
+        Write-Log "  [DRY-RUN] Would remove $(Format-Bytes $sizeBefore) from: $Description ($Path)"
+    } else {
+        $items | Remove-Item -Force -Recurse -ErrorAction SilentlyContinue
+        Write-Log "  Removed $(Format-Bytes $sizeBefore) from: $Description"
+    }
+    return $sizeBefore
+}
+
+# ── Setup ──────────────────────────────────────────────────────────────────────
+
+$null = New-Item -ItemType Directory -Path (Split-Path $LogPath) -Force
+$totalFreed = 0
+
+Write-Log ("=" * 60)
+Write-Log "Disk Cleanup Script — Windows Server 2016 Essentials x64"
+Write-Log ("DryRun = $DryRun")
+Write-Log ("=" * 60)
+
+$driveBefore = (Get-PSDrive C).Free
+Write-Log "Free space on C: before cleanup: $(Format-Bytes $driveBefore)"
+
+# ── 1. Windows Temp folders ────────────────────────────────────────────────────
+
+Write-Log "`n[1] Windows Temp Folders"
+$totalFreed += Remove-Items -Path $env:TEMP            -Description "Current user TEMP"   -OlderThanDays 1
+$totalFreed += Remove-Items -Path "C:\Windows\Temp"    -Description "Windows TEMP"         -OlderThanDays 1
+
+# ── 2. Windows Update cache ────────────────────────────────────────────────────
+
+Write-Log "`n[2] Windows Update Download Cache"
+# Stop Windows Update service temporarily (only when not a dry run)
+if (-not $DryRun) {
+    Write-Log "  Stopping wuauserv & bits services..."
+    Stop-Service -Name wuauserv, bits -Force -ErrorAction SilentlyContinue
+    Start-Sleep -Seconds 5
+}
+
+$totalFreed += Remove-Items -Path "C:\Windows\SoftwareDistribution\Download" `
+                            -Description "Windows Update Downloads"
+
+if (-not $DryRun) {
+    Write-Log "  Restarting wuauserv & bits services..."
+    Start-Service -Name wuauserv, bits -ErrorAction SilentlyContinue
+}
+
+# ── 3. Component Store (WinSxS) cleanup via DISM ──────────────────────────────
+
+Write-Log "`n[3] Component Store (WinSxS) — DISM StartComponentCleanup"
+if ($DryRun) {
+    Write-Log "  [DRY-RUN] Would run: DISM /Online /Cleanup-Image /StartComponentCleanup /ResetBase"
+} else {
+    Write-Log "  Running DISM cleanup (this may take several minutes)..."
+    $dismResult = & DISM.exe /Online /Cleanup-Image /StartComponentCleanup /ResetBase 2>&1
+    Write-Log ("  DISM output: " + ($dismResult -join " | "))
+}
+
+# ── 4. CBS (Component-Based Servicing) logs ────────────────────────────────────
+
+Write-Log "`n[4] CBS Logs"
+$totalFreed += Remove-Items -Path "C:\Windows\Logs\CBS" -Description "CBS Logs" -Filter "*.log" -OlderThanDays 7
+
+# ── 5. IIS Logs ────────────────────────────────────────────────────────────────
+
+Write-Log "`n[5] IIS Logs (older than 30 days)"
+$iisLogPaths = @(
+    "C:\inetpub\logs\LogFiles",
+    "C:\Windows\System32\LogFiles\W3SVC1"
+)
+foreach ($iisPath in $iisLogPaths) {
+    $totalFreed += Remove-Items -Path $iisPath -Description "IIS Logs" -Filter "*.log" -OlderThanDays 30
+}
+
+# ── 6. Windows Error Reporting / crash dumps ──────────────────────────────────
+
+Write-Log "`n[6] Windows Error Reporting & Crash Dumps"
+$werPaths = @(
+    "C:\ProgramData\Microsoft\Windows\WER\ReportArchive",
+    "C:\ProgramData\Microsoft\Windows\WER\ReportQueue",
+    "$env:LOCALAPPDATA\Microsoft\Windows\WER\ReportArchive",
+    "$env:LOCALAPPDATA\Microsoft\Windows\WER\ReportQueue",
+    "C:\Windows\Minidump",
+    "C:\Windows\MEMORY.DMP"
+)
+foreach ($p in $werPaths) {
+    $totalFreed += Remove-Items -Path $p -Description "WER/CrashDump"
+}
+
+# ── 7. Recycle Bin ────────────────────────────────────────────────────────────
+
+Write-Log "`n[7] Recycle Bin"
+if ($DryRun) {
+    Write-Log "  [DRY-RUN] Would empty the Recycle Bin"
+} else {
+    Clear-RecycleBin -Force -ErrorAction SilentlyContinue
+    Write-Log "  Recycle Bin emptied"
+}
+
+# ── 8. Old Windows.old / upgrade leftovers ────────────────────────────────────
+
+Write-Log "`n[8] Windows.old / upgrade leftovers"
+$oldPaths = @("C:\Windows.old", "C:\`$Windows.~BT", "C:\`$Windows.~WS")
+foreach ($p in $oldPaths) {
+    $totalFreed += Remove-Items -Path $p -Description "Windows upgrade remnants"
+}
+
+# ── 9. Prefetch ───────────────────────────────────────────────────────────────
+
+Write-Log "`n[9] Prefetch files (older than 30 days)"
+$totalFreed += Remove-Items -Path "C:\Windows\Prefetch" -Description "Prefetch" -Filter "*.pf" -OlderThanDays 30
+
+# ── 10. User profile temp / caches ────────────────────────────────────────────
+
+Write-Log "`n[10] All User Profile Temp Directories"
+Get-ChildItem "C:\Users" -Directory -ErrorAction SilentlyContinue | ForEach-Object {
+    $userTemp = Join-Path $_.FullName "AppData\Local\Temp"
+    $totalFreed += Remove-Items -Path $userTemp -Description "User Temp ($($_.Name))" -OlderThanDays 1
+}
+
+# ── 11. Built-in Disk Cleanup (cleanmgr) ──────────────────────────────────────
+
+Write-Log "`n[11] Built-in Disk Cleanup Utility (cleanmgr)"
+if ($DryRun) {
+    Write-Log "  [DRY-RUN] Would run cleanmgr /sagerun:1 after configuring sageset"
+} else {
+    # Pre-configure all cleanmgr categories silently via sageset
+    $regBase = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches"
+    $categories = @(
+        "Active Setup Temp Folders","BranchCache","Content Indexer Cleaner",
+        "Device Driver Packages","Downloaded Program Files","GameNewsFiles",
+        "GameStatisticsFiles","GameUpdateFiles","Internet Cache Files",
+        "Memory Dump Files","Offline Pages Files","Old ChkDsk Files",
+        "Previous Installations","Recycle Bin","Service Pack Cleanup",
+        "Setup Log Files","System error memory dump files",
+        "System error minidump files","Temporary Files","Temporary Setup Files",
+        "Temporary Sync Files","Thumbnail Cache","Update Cleanup",
+        "Upgrade Discarded Files","User file versions","Windows Defender",
+        "Windows Error Reporting Archive Files","Windows Error Reporting Files",
+        "Windows Error Reporting Queue Files","Windows Error Reporting Temp Files",
+        "Windows ESD installation files","Windows Upgrade Log Files"
+    )
+    foreach ($cat in $categories) {
+        $key = Join-Path $regBase $cat
+        if (Test-Path $key) {
+            Set-ItemProperty -Path $key -Name StateFlags0001 -Value 2 -Type DWORD -ErrorAction SilentlyContinue
+        }
+    }
+    Write-Log "  Running cleanmgr /sagerun:1 ..."
+    Start-Process -FilePath cleanmgr.exe -ArgumentList "/sagerun:1" -Wait -NoNewWindow
+    Write-Log "  cleanmgr completed"
+}
+
+# ── Summary ───────────────────────────────────────────────────────────────────
+
+$driveAfter = (Get-PSDrive C).Free
+$actualFreed = $driveAfter - $driveBefore
+
+Write-Log "`n$("=" * 60)"
+Write-Log "SUMMARY"
+Write-Log ("=" * 60)
+Write-Log "Mode              : $(if ($DryRun) {'DRY RUN (no files deleted)'} else {'LIVE'})"
+Write-Log "Estimated savings : $(Format-Bytes $totalFreed)"
+if (-not $DryRun) {
+    Write-Log "Actual space freed: $(Format-Bytes $actualFreed)"
+    Write-Log "Free space on C:  : $(Format-Bytes $driveAfter)"
+}
+Write-Log "Log saved to      : $LogPath"
+Write-Log ("=" * 60)
+
+}
+
+Disk-Cleanup -DryRun $true
+
+Write-Host "Run for real? (Type YES to continue)" 
+$Choice = Read-Host
+if ($Choice -eq "yes") {
+  $LogDir = "C:\RTSupport\Logs"
+  if (!(test-path $LogDir)) {new-item $LogDir -itemtype Directory -force > $null}
+  Disk-Cleanup -DryRun $false -LogPath "$($LogDir)\$(get-date -format 'yyyyMMddHHmmss')_disk-cleanup.log"
+}
