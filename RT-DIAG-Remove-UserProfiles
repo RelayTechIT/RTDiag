@@ -1,0 +1,303 @@
+#Requires -RunAsAdministrator
+<#
+.SYNOPSIS
+    Interactively select and delete user profiles to free up disk space.
+
+.DESCRIPTION
+    Lists all local user profiles with size, last login, and account status.
+    Lets you pick one or more profiles to delete (with safety checks to prevent
+    removing the currently logged-in user, built-in accounts, or active sessions).
+
+.NOTES
+    - Run as Administrator (enforced by #Requires)
+    - Tested on Windows Server 2016 Essentials x64
+    - Deletes both the profile folder AND the registry entry (CIM/WMI Win32_UserProfile)
+    - Use -DryRun $true to preview what would be removed without deleting anything
+
+.PARAMETER DryRun
+    When $true (default), shows what would be deleted without removing anything.
+    Set to $false to perform actual deletion.
+
+.PARAMETER LogPath
+    Path for the operation log. Defaults to C:\Logs\ProfileCleanup_<timestamp>.log
+#>
+
+param(
+    [bool]$DryRun    = $true,
+    [string]$LogPath = "C:\Logs\ProfileCleanup_$(Get-Date -f 'yyyyMMdd_HHmmss').log"
+)
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = "SilentlyContinue"
+
+# ── Helpers ────────────────────────────────────────────────────────────────────
+
+function Write-Log {
+    param([string]$Message, [string]$Level = "INFO")
+    $line = "[{0}] [{1}] {2}" -f (Get-Date -f "yyyy-MM-dd HH:mm:ss"), $Level, $Message
+    $color = switch ($Level) {
+        "WARN"    { "Yellow" }
+        "ERROR"   { "Red" }
+        "SUCCESS" { "Green" }
+        default   { "Cyan" }
+    }
+    Write-Host $line -ForegroundColor $color
+    $line | Out-File -FilePath $LogPath -Append -Encoding UTF8
+}
+
+function Format-Bytes {
+    param([long]$Bytes)
+    switch ($Bytes) {
+        { $_ -ge 1GB } { return "{0:N2} GB" -f ($_ / 1GB) }
+        { $_ -ge 1MB } { return "{0:N2} MB" -f ($_ / 1MB) }
+        { $_ -ge 1KB } { return "{0:N2} KB" -f ($_ / 1KB) }
+        default         { return "$_ bytes" }
+    }
+}
+
+function Get-FolderSize {
+    param([string]$Path)
+    if (-not (Test-Path $Path)) { return 0 }
+    try {
+        (Get-ChildItem $Path -Recurse -Force -ErrorAction SilentlyContinue |
+            Measure-Object -Property Length -Sum -ErrorAction SilentlyContinue).Sum
+    } catch { 0 }
+}
+
+function Get-LastLogin {
+    param([string]$Username)
+    try {
+        $acct = Get-LocalUser -Name $Username -ErrorAction SilentlyContinue
+        if ($acct -and $acct.LastLogon) { return $acct.LastLogon }
+    } catch {}
+    return $null
+}
+
+function Get-ActiveSessions {
+    # Returns usernames with currently active logon sessions
+    $active = @()
+    try {
+        $sessions = query session 2>$null
+        foreach ($line in $sessions) {
+            if ($line -match '^\s*(\S+)\s+(\S+)\s+\d+\s+(Active|Conn)') {
+                $active += $Matches[2]
+            }
+        }
+    } catch {}
+    # Always include the current process owner
+    $active += [System.Security.Principal.WindowsIdentity]::GetCurrent().Name.Split('\')[-1]
+    return $active | Sort-Object -Unique
+}
+
+# ── Protected accounts (never shown for deletion) ──────────────────────────────
+
+$ProtectedAccounts = @(
+    'Administrator', 'DefaultAccount', 'Guest', 'WDAGUtilityAccount',
+    'systemprofile', 'LocalService', 'NetworkService', 'Default', 'Public',
+    'All Users', 'Default User'
+)
+
+# ── Setup ──────────────────────────────────────────────────────────────────────
+
+$null = New-Item -ItemType Directory -Path (Split-Path $LogPath) -Force 2>$null
+
+Clear-Host
+Write-Host ""
+Write-Host "  ╔══════════════════════════════════════════════════════════╗" -ForegroundColor White
+Write-Host "  ║        User Profile Cleanup — Windows Server 2016       ║" -ForegroundColor White
+Write-Host "  ╚══════════════════════════════════════════════════════════╝" -ForegroundColor White
+Write-Host ""
+
+if ($DryRun) {
+    Write-Host "  *** DRY RUN MODE — no files will be deleted ***" -ForegroundColor Yellow
+    Write-Host "  *** Run with -DryRun `$false to perform actual deletion ***" -ForegroundColor Yellow
+    Write-Host ""
+}
+
+Write-Log "Script started. DryRun=$DryRun"
+
+# ── Gather profiles ────────────────────────────────────────────────────────────
+
+Write-Host "  Scanning user profiles (this may take a moment)..." -ForegroundColor Cyan
+Write-Host ""
+
+$activeSessions = Get-ActiveSessions
+$wmiProfiles    = Get-CimInstance -ClassName Win32_UserProfile -ErrorAction Stop |
+                  Where-Object { -not $_.Special }   # exclude system/service profiles
+
+$profiles = foreach ($wp in $wmiProfiles) {
+    $folderPath = $wp.LocalPath
+    $username   = Split-Path $folderPath -Leaf
+
+    # Skip built-in / protected names
+    if ($ProtectedAccounts -contains $username) { continue }
+    if ($folderPath -match 'systemprofile|LocalService|NetworkService') { continue }
+
+    $sizeBytes   = Get-FolderSize -Path $folderPath
+    $lastLogin   = Get-LastLogin  -Name $username
+    $isActive    = $activeSessions -contains $username
+    $localExists = Test-Path $folderPath
+
+    [PSCustomObject]@{
+        Username    = $username
+        Path        = $folderPath
+        SizeBytes   = $sizeBytes
+        SizeDisplay = Format-Bytes ($sizeBytes)
+        LastLogin   = if ($lastLogin) { $lastLogin.ToString("yyyy-MM-dd HH:mm") } else { "Unknown" }
+        IsActive    = $isActive
+        PathExists  = $localExists
+        WmiProfile  = $wp
+    }
+}
+
+if (-not $profiles -or @($profiles).Count -eq 0) {
+    Write-Host "  No eligible user profiles found." -ForegroundColor Yellow
+    exit 0
+}
+
+# Sort largest first
+$profiles = @($profiles | Sort-Object SizeBytes -Descending)
+
+# ── Display table ──────────────────────────────────────────────────────────────
+
+$totalSize = ($profiles | Measure-Object -Property SizeBytes -Sum).Sum
+
+Write-Host ("  {0,-4} {1,-25} {2,10} {3,-20} {4,-8} {5}" -f `
+    "#", "Username", "Size", "Last Login", "Active?", "Profile Path") -ForegroundColor White
+Write-Host ("  " + ("-" * 90)) -ForegroundColor DarkGray
+
+$index = 1
+foreach ($p in $profiles) {
+    $activeFlag = if ($p.IsActive) { "YES ⚠" } else { "No" }
+    $color      = if ($p.IsActive) { "Yellow" } else { "Gray" }
+
+    Write-Host ("  {0,-4} {1,-25} {2,10} {3,-20} {4,-8} {5}" -f `
+        $index, $p.Username, $p.SizeDisplay, $p.LastLogin, $activeFlag, $p.Path) -ForegroundColor $color
+    $index++
+}
+
+Write-Host ("  " + ("-" * 90)) -ForegroundColor DarkGray
+Write-Host ("  Total profile storage shown: " + (Format-Bytes $totalSize)) -ForegroundColor White
+Write-Host ""
+Write-Host "  NOTE: Profiles marked 'YES ⚠' have active sessions and CANNOT be selected." -ForegroundColor Yellow
+Write-Host ""
+
+# ── Selection prompt ───────────────────────────────────────────────────────────
+
+Write-Host "  Enter profile numbers to delete (comma-separated), or:" -ForegroundColor Cyan
+Write-Host "  'all'  — select all non-active profiles" -ForegroundColor Cyan
+Write-Host "  'q'    — quit without deleting anything" -ForegroundColor Cyan
+Write-Host ""
+$input = Read-Host "  Your selection"
+
+if ($input.Trim().ToLower() -eq 'q' -or $input.Trim() -eq '') {
+    Write-Host "`n  Exiting. No profiles were deleted." -ForegroundColor Green
+    Write-Log "User chose to quit. No action taken."
+    exit 0
+}
+
+# Build the selected list
+$selected = @()
+
+if ($input.Trim().ToLower() -eq 'all') {
+    $selected = $profiles | Where-Object { -not $_.IsActive }
+} else {
+    $numbers = $input -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ -match '^\d+$' }
+    foreach ($n in $numbers) {
+        $i = [int]$n - 1
+        if ($i -ge 0 -and $i -lt $profiles.Count) {
+            $p = $profiles[$i]
+            if ($p.IsActive) {
+                Write-Host "  [SKIP] '$($p.Username)' has an active session — cannot delete." -ForegroundColor Yellow
+                Write-Log "Skipped active profile: $($p.Username)" "WARN"
+            } else {
+                $selected += $p
+            }
+        } else {
+            Write-Host "  [SKIP] Invalid number: $n" -ForegroundColor Yellow
+        }
+    }
+}
+
+if ($selected.Count -eq 0) {
+    Write-Host "`n  No valid profiles selected. Exiting." -ForegroundColor Yellow
+    Write-Log "No valid profiles selected."
+    exit 0
+}
+
+# ── Confirmation ───────────────────────────────────────────────────────────────
+
+$selectedSize = ($selected | Measure-Object -Property SizeBytes -Sum).Sum
+Write-Host ""
+Write-Host "  ── Profiles selected for deletion ──────────────────────────" -ForegroundColor White
+foreach ($p in $selected) {
+    Write-Host ("  • {0,-25} {1,10}   {2}" -f $p.Username, $p.SizeDisplay, $p.Path) -ForegroundColor Red
+}
+Write-Host ""
+Write-Host ("  Estimated space to be freed: " + (Format-Bytes $selectedSize)) -ForegroundColor White
+Write-Host ""
+
+if ($DryRun) {
+    Write-Host "  [DRY RUN] The above profiles WOULD be deleted. Rerun with -DryRun `$false to execute." -ForegroundColor Yellow
+    Write-Log "DRY RUN complete. Selected profiles: $(($selected.Username) -join ', '). Estimated freed: $(Format-Bytes $selectedSize)"
+    exit 0
+}
+
+$confirm = Read-Host "  Type 'YES' to confirm permanent deletion, or anything else to cancel"
+if ($confirm -ne 'YES') {
+    Write-Host "`n  Cancelled. No profiles were deleted." -ForegroundColor Green
+    Write-Log "User cancelled at confirmation prompt."
+    exit 0
+}
+
+# ── Delete ─────────────────────────────────────────────────────────────────────
+
+Write-Host ""
+Write-Log "Starting profile deletion..."
+
+$freedTotal = 0
+
+foreach ($p in $selected) {
+    Write-Host "  Deleting profile: $($p.Username) ..." -ForegroundColor Cyan
+
+    try {
+        # Remove via WMI (removes both the folder AND the registry entry cleanly)
+        $p.WmiProfile | Remove-CimInstance -ErrorAction Stop
+        $freed = $p.SizeBytes
+        $freedTotal += $freed
+        Write-Log "  Deleted profile '$($p.Username)' at '$($p.Path)' — freed $(Format-Bytes $freed)" "SUCCESS"
+        Write-Host "    ✓ Deleted '$($p.Username)' ($(Format-Bytes $freed) freed)" -ForegroundColor Green
+    } catch {
+        Write-Log "  ERROR deleting '$($p.Username)': $_" "ERROR"
+        Write-Host "    ✗ Failed to remove via WMI for '$($p.Username)': $_" -ForegroundColor Red
+
+        # Fallback: manual folder removal if WMI fails
+        if ($p.PathExists -and (Test-Path $p.Path)) {
+            Write-Host "    → Attempting manual folder removal..." -ForegroundColor Yellow
+            try {
+                Remove-Item -Path $p.Path -Recurse -Force -ErrorAction Stop
+                $freedTotal += $p.SizeBytes
+                Write-Log "  Manually removed folder '$($p.Path)'" "WARN"
+                Write-Host "    ✓ Folder removed (registry entry may remain — clean manually if needed)" -ForegroundColor Yellow
+            } catch {
+                Write-Log "  FAILED manual removal of '$($p.Path)': $_" "ERROR"
+                Write-Host "    ✗ Manual removal also failed: $_" -ForegroundColor Red
+            }
+        }
+    }
+}
+
+# ── Summary ───────────────────────────────────────────────────────────────────
+
+$driveAfter = (Get-PSDrive C).Free
+
+Write-Host ""
+Write-Host "  ═══════════════════════════════════════════════" -ForegroundColor White
+Write-Host "  DONE" -ForegroundColor Green
+Write-Host ("  Profiles deleted : " + $selected.Count) -ForegroundColor White
+Write-Host ("  Space freed      : " + (Format-Bytes $freedTotal)) -ForegroundColor White
+Write-Host ("  Free on C:       : " + (Format-Bytes $driveAfter)) -ForegroundColor White
+Write-Host ("  Log saved to     : $LogPath") -ForegroundColor White
+Write-Host "  ═══════════════════════════════════════════════" -ForegroundColor White
+
+Write-Log "Deletion complete. Profiles deleted: $($selected.Count). Total freed: $(Format-Bytes $freedTotal). Free on C: $(Format-Bytes $driveAfter)"
