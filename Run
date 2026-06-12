@@ -124,6 +124,7 @@ If ($ErrN -gt 0) {
         [PSCustomObject]@{DisplayName = 'DoD DISA SCAP Scan v5.12.1'; FunctionName = 'RTDiag-SCAPScan-v5.12.1'}
         [PSCustomObject]@{DisplayName = 'Remove Microsoft OneDrive'; FunctionName = 'RTDiag-Remove-MSOneDrive'}
         [PSCustomObject]@{DisplayName = 'Remove Microsoft Teams'; FunctionName = 'RTDiag-Remove-MSTeams'}
+        [PSCustomObject]@{DisplayName = 'BETA - Remove User Profiles'; FunctionName = 'RTDIAG-Remove-UserProfiles'}
     )
 
     $n = 1
