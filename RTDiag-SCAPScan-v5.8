@@ -1,0 +1,59 @@
+$ProgressPreference     =   'Continue'
+$ErrorActionPreference  =   'Stop' 
+
+function Run-DisaSCAPScan {
+    param (
+        $Version="5.8",
+        $TempDirectory = "C:\RTSupport\Utilities\DISA_SCAP",
+        [ValidateSet("CAT_I_Only","MAC-1_Classified","MAC-1_Public","MAC-1_Sensitive","MAC-2_Classified","MAC-2_Public","MAC-2_Sensitive","MAC-3_Classified","MAC-3_Public","MAC-3_Sensitive")]
+        [string]$ScanProfile="MAC-2-Public"
+    )
+    $TempDirectory = "$($TempDirectory)\$($Version)"
+    if (!(Test-Path $TempDirectory)) {new-item $TempDirectory -ItemType Directory -Force > $null}
+    $URI = "https://media.githubusercontent.com/media/niwc-atlantic/scap-scc/refs/heads/main/release_archive/SCC_$($Version)/scc-$($Version)_Windows_bundle.zip"
+
+    
+    Write-Host If the cscc process is running, stop it
+        get-process cscc -ErrorAction SilentlyContinue | stop-process
+
+    write-host "Check if cscc.exe is already present and skip downloading if it is"
+        $cscc = gci -path $TempDirectory -recurse cscc.exe
+            If (!($cscc)) {
+                Write-Host Downloading the .zip file to $lclfldr\scc-$Version`_Windows_bundle.zip
+                    Invoke-WebRequest -Uri $URI -OutFile "$($TempDirectory)\$($URI.Split('/')[-1])"                             # Download the file
+                    Expand-Archive -Path "$($TempDirectory)\$($URI.Split('/')[-1])" -DestinationPath "$($TempDirectory)"        # Extract the file
+                    Remove-Item -Path "$($TempDirectory)\$($URI.Split('/')[-1])"                                                # Delete the .zip
+                    foreach ($ZipFile in (GCI "$($TempDirectory)" "*.zip" -Recurse)) {                                          # Find any .zip files and extract them, then delete the .zip file
+                        Expand-Archive -Path $ZipFile.FullName -DestinationPath $ZipFile.DirectoryName -Force
+                        Remove-Item -Path $ZipFile.FullName -Force
+                    }
+                $cscc = gci -path $TempDirectory -recurse cscc.exe
+            }      
+        
+        # Grab the latest update definitions
+            $Args = "-ea --checkForContentUpdates --installAll"
+                Write-host "Updating Definitions..."
+                Write-host "    Running $($cscc.fullname) -ArgumentList $($Args)"
+            start-process -FilePath $cscc.fullname -ArgumentList $Args -Wait -NoNewWindow
+
+        # Create Scan and Report Profiles
+            $Args = "--SetProfileAll $($ScanProfile)"
+                Write-Host "SCC Scan and Report Creation"
+                Write-host "    Running $($cscc.fullname) -ArgumentList $($Args)"
+            start-process -FilePath $cscc.fullname -ArgumentList $Args -Wait -NoNewWindow
+
+        # Run the scan
+            $Args = "-ear -u $($TempDirectory)"
+                Write-Host "Running the scan"
+                Write-host "Running $($cscc.fullname) -ArgumentList $($Args)"
+            start-process -FilePath $cscc.fullname -ArgumentList $Args -Wait -NoNewWindow
+
+    write-host "Zipping Results for easy extraction"
+            $MostRecentResults = Get-ChildItem $TempDirectory\sessions -Directory | Sort-Object {$_.LastWriteTime} -Descending | Select-Object -First 1
+            $Export =	$TempDirectory+'\_Archive\'+$MostRecentResults.name+'_'+$env:COMPUTERNAME
+            New-Item $Export -itemtype Directory
+            Compress-Archive $MostRecentResults "$($Export).zip" -Force
+            Remove-Item $Export -Recurse -Force
+        
+    Write-Host "Results from this scan are located at $($export).zip"
+}
