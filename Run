@@ -121,7 +121,7 @@ If ($ErrN -gt 0) {
         [PSCustomObject]@{DisplayName = 'Disk Space Cleanup'; FunctionName = 'RTDiag-Disk-Cleanup'}
         [PSCustomObject]@{DisplayName = 'Check Disk for Issues'; FunctionName = 'RTDiag-Check-Disks'}
         [PSCustomObject]@{DisplayName = 'Local Security Checks'; FunctionName = 'RTDIAG-LocalSecurityChecks'}
-        [PSCustomObject]@{DisplayName = 'DoD DISA SCAP Scan v5.12.1'; FunctionName = 'RTDiag-SCAPScan-v5.12.1'}
+        [PSCustomObject]@{DisplayName = 'DoD DISA SCAP Scan v5.14.1'; FunctionName = 'RTDiag-SCAPScan-v5.14.1'}
         [PSCustomObject]@{DisplayName = 'Remove Microsoft OneDrive'; FunctionName = 'RTDiag-Remove-MSOneDrive'}
         [PSCustomObject]@{DisplayName = 'Remove Microsoft Teams'; FunctionName = 'RTDiag-Remove-MSTeams'}
         [PSCustomObject]@{DisplayName = 'BETA - Remove User Profiles'; FunctionName = 'RTDIAG-Remove-UserProfiles'}
