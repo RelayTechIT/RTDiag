@@ -1,3 +1,4 @@
+$ComputerName = $env:COMPUTERNAME
 [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
 [Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime] | Out-Null
 
@@ -6,7 +7,7 @@ $template = @"
   <visual>
     <binding template="ToastText04">
       <text id="1">Syncro Helper Notification</text>
-      <text id="2">Computer Name: $env:COMPUTERNAME</text>
+      <text id="2">Computer Name: $ComputerName</text>
     </binding>
   </visual>
 </toast>
