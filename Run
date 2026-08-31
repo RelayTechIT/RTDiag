@@ -125,6 +125,7 @@ If ($ErrN -gt 0) {
         [PSCustomObject]@{DisplayName = 'Remove Microsoft OneDrive'; FunctionName = 'RTDiag-Remove-MSOneDrive'}
         [PSCustomObject]@{DisplayName = 'Remove Microsoft Teams'; FunctionName = 'RTDiag-Remove-MSTeams'}
         [PSCustomObject]@{DisplayName = 'BETA - Remove User Profiles'; FunctionName = 'RTDIAG-Remove-UserProfiles'}
+        [PSCustomObject]@{DisplayName = 'BETA - Test DNSSecurity'; FunctionName = 'RTDIAG-Test-DNSSec'}
     )
 
     $n = 1
