@@ -1,0 +1,109 @@
+$ErrorActionPreference = 'Stop'
+$ProgressPreference = 'SilentlyContinue'
+
+# Install the PSSQLite module:
+    if (!(Get-Module -ListAvailable PSSQLLite)) {
+        Install-Module -Name PSSQLite -Scope AllUsers -Force
+        Write-Host "Installed the PSSQLLite Powershell Module"
+        Import-Module PSSQLite
+    }
+
+# Install the ImportExcel module:
+    if (!(Get-Module -ListAvailable ImportExcel)) {
+        Install-Module -Name ImportExcel -Scope AllUsers -Force
+        Write-Host "Installed the ImportExcel Powershell Module"
+        Import-Module ImportExcel
+    }
+
+function Copy-AndExportChromiumHistory {
+    param (
+        $ChromiumHistoryDatabase,
+        $WorkingDirectory
+    )
+    try {
+        if (!(Test-Path $WorkingDirectory)) {new-item $WorkingDirectory -ItemType Directory -Force > $null}
+        # Check if database file exists
+        if (!(Test-path $ChromiumHistoryDatabase)) {
+            Throw "Chromium History Database file: $($ChromiumHistoryDatabase) does not exist"
+        } else {
+            $LocalUser           = $ChromiumHistoryDatabase.Split('\')[2]
+            $ChromiumBrowserName = $ChromiumHistoryDatabase.Split('\')[6]
+            $ChromiumProfile     = $ChromiumHistoryDatabase.Split('\')[8]
+
+            # Copy Database to temp directory to avoid a lock
+            $TmpFileName = "ChromiumHistoryDB_$($ChromiumBrowserName)_$($LocalUser)_$($ChromiumProfile)_$(Get-Date -Format 'yyyyMMddHHmmss')"
+            $TmpChromiumDB = "$($WorkingDirectory)\$($TmpFileName).db"
+            $OutputCSV = "$($WorkingDirectory)\$($TmpFileName).csv"
+            $OutputXlsx = "$($WorkingDirectory)\$($TmpFileName).xlsx"
+            
+            Copy-Item $ChromiumHistoryDatabase $TmpChromiumDB -Force
+            $results = Invoke-SqliteQuery -DataSource $TmpChromiumDB -Query "SELECT url, datetime(last_visit_time/1000000-11644473600,'unixepoch') as visit_time FROM urls ORDER BY last_visit_time DESC"
+
+            # Export to CSV
+            $results | Export-Csv $OutputCSV -NoTypeInformation
+            Write-Host "Exported to csv file $($OutputCSV)"
+
+            # Try Exporting to Excel as well
+            # $results | Export-Excel -Path $OutputXlsx -WorksheetName "$($LocalUser)_$($ChromiumProfile)" -TableName "$($LocalUser)_$($ChromiumProfile)" -Append
+            # Write-Host "Exported to xlsx file $($OutputXlsx)"
+
+            # Cleanup temp database file
+            Remove-Item $TmpChromiumDB
+            Write-Host "Removed file: $($OutputXlsx)"
+        }
+    }
+    catch {
+        Write-Host "An error has occurrec: $($_)" -ForegroundColor Red
+    }    
+}
+
+# Generate csv files of url history for all Chromium profiles found
+
+$n = 0
+$WrkDir = "C:\RTSupport\Scripts\Chromium-History-Export"
+$ChromiumHistoryDatabases = Get-ChildItem "C:\Users\*\AppData\Local\*\*\User Data\*\History"
+Foreach ($Database in $ChromiumHistoryDatabases) {
+    $n++
+    $Dbfile = $Database.Fullname
+    Write-Host "Item $($n) of $($ChromiumHistoryDatabases.count)"
+    Write-Host "    Dbfile: $($Dbfile)"
+    Write-Host "    WrkDir: $($WrkDir)"
+    Copy-AndExportChromiumHistory -ChromiumHistoryDatabase $Dbfile -WorkingDirectory $WrkDir
+}
+
+# Combine all the CSV files created into a single excel spreadsheet
+$n = 0
+$ExportXlsx = "$($WrkDir)\Chromium_Report_For_$($ENV:COMPUTERNAME)_AsOf_$(get-date -Format 'yyyyMMddHHmm').xlsx"
+$CSVFiles = (Get-ChildItem $WrkDir\*.csv).FullName
+$CSVFiles | foreach {
+    $n++
+    Write-Host "CSV File $($n) of $($CSVFiles.count):"
+    $CSVData = import-csv $_
+    if ($CSVData) {
+        $ComputerName     = $ENV:ComputerName
+        $ChromiumBrowser  = $_.split('\')[-1].split('_')[1]
+        $LocalUserAccount = $_.split('\')[-1].split('_')[2]
+        $ChromiumProfile  = $_.split('\')[-1].split('_')[3]
+        $TmpCSV = @()
+        $CSVData | foreach {
+            $TmpCSV += @([PSCustomObject]@{
+                Computername = $ComputerName
+                Browser      = $ChromiumBrowser
+                Profile      = $ChromiumProfile
+                visit_time   = $_.visit_time
+                url          = $_.url
+            })
+        }
+        $TmpCSV | Export-Excel -Path $ExportXlsx -WorksheetName "BrowserHistory" -Append
+        Write-Host "    $($CSVData.count) records exported to: $($ExportXlsx)"
+    } else {
+        Write-Host "    No records found in file: $($_)"
+    }
+    Remove-Item $_
+}
+
+# Add DNS Client Cache, TCP and UDP connections to the spreadsheet
+Get-DnsClientCache | Export-Excel -Path $ExportXlsx -WorksheetName "DNSClientCache"
+Get-NetTCPConnection | Export-Excel -Path $ExportXlsx -WorksheetName "NetTCPConnection"
+Get-NetUDPEndpoint | Export-Excel -Path $ExportXlsx -WorksheetName "NetUDPEndpoint"
+
